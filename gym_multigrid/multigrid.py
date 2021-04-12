@@ -1378,6 +1378,8 @@ class MultiGridEnv(gym.Env):
                         self._reward(i, rewards, 1)
                     elif fwd_cell.type == 'switch':
                         self._handle_switch(i, rewards, fwd_pos, fwd_cell)
+                    elif fwd_cell.type == 'agent':
+                        rewards[i]+= -20
                 elif fwd_cell is None or fwd_cell.can_overlap():
                     self.grid.set(*fwd_pos, self.agents[i])
                     self.grid.set(*self.agents[i].pos, None)
