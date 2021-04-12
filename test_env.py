@@ -34,10 +34,10 @@ def main():
 
         ac = [env.action_space.sample() for _ in range(nb_agents)]
 
-        ac = input('Enter')
-        print(ac)
+        ac = input('cmd >')
         ac = [int(ac)]
-        obs, _, done, _ = env.step(ac)
+        obs, rewards, done, _ = env.step(ac)
+        print(rewards)
 
         if done:
             break

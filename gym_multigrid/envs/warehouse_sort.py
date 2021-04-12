@@ -64,13 +64,31 @@ class WarehouseSortEnv(MultiGridEnv):
         for a in self.agents:
             self.place_agent(a)
 
-    def _reward(self, i, rewards,reward=1):
-        for j,a in enumerate(self.agents):
-            if a.index==i or a.index==0:
-                rewards[j]+=reward
-            if self.zero_sum:
-                if a.index!=i or a.index==0:
-                    rewards[j] -= reward
+    def _reward(self, i, rewards, fwd_cell, package, is_pickup=False):
+        """ 
+        Reward for the warehouse_sort. DO NOT CHANGE ORDER OF `if` statements.
+        """
+
+        # Package picked up
+        if is_pickup:
+            rewards[i]+=1
+            return
+
+        # Package dropped at a random position
+        if not fwd_cell:
+            rewards[i]+=-20
+            return
+
+        # Package dropped correctly
+        if fwd_cell.index == package.index:
+            rewards[i]+=10
+            return
+
+        # Package dropped at a wrong chute 
+        if fwd_cell.index != package.index:
+            rewards[i]+=-10
+            return
+               
 
     def _handle_pickup(self, i, rewards, fwd_pos, fwd_cell):
         if fwd_cell:
@@ -78,18 +96,19 @@ class WarehouseSortEnv(MultiGridEnv):
                 if self.agents[i].carrying is None and fwd_cell.type=="induct":
                     self.agents[i].carrying = fwd_cell.give_package()
                     self.agents[i].carrying.cur_pos = np.array([-1, -1])
+                    self._reward(i, rewards, fwd_cell, self.agents[i].carrying, is_pickup=True)
                     # self.grid.set(*fwd_pos, None)
 
     def _handle_drop(self, i, rewards, fwd_pos, fwd_cell):
         if self.agents[i].carrying:
             if fwd_cell:
                 if fwd_cell.type == 'chute' and fwd_cell.target_type == self.agents[i].carrying.type:
-                    # if self.agents[i].carrying.index in [0, fwd_cell.index]:
-                    # self._reward(fwd_cell.index, rewards, fwd_cell.reward)
+                    self._reward(i, rewards, fwd_cell, self.agents[i].carrying)
                     fwd_cell.drop_package(self.agents[i].carrying)
                     self.agents[i].carrying.cur_pos = fwd_pos
                     self.agents[i].carrying = None
             else:
+                self._reward(i, rewards, fwd_cell, self.agents[i].carrying)
                 self.grid.set(*fwd_pos, self.agents[i].carrying)
                 self.agents[i].carrying.cur_pos = fwd_pos
                 self.agents[i].carrying = None
@@ -102,10 +121,11 @@ class WarehouseSortEnv(MultiGridEnv):
 
 class WarehouseSortEnvN1(WarehouseSortEnv):
     def __init__(self):
+        w = 9
         super().__init__(size=None,
         height=7,
-        width=6,
-        goal_pst = [[5,2], [5,4]],
+        width=w,
+        goal_pst = [[w-1,2], [w-1,4]],
         goal_index = [0,1],
         agents_index = [0],
         num_balls=1,

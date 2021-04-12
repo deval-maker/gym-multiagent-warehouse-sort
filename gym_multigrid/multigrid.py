@@ -1025,7 +1025,7 @@ class MultiGridEnv(gym.Env):
         self.ac_dim = self.action_space.n
 
         # Range of possible rewards
-        self.reward_range = (0, 1)
+        self.reward_range = (-20, 10)
 
         # Window to use for human rendering mode
         self.window = None
@@ -1352,6 +1352,13 @@ class MultiGridEnv(gym.Env):
 
             # Get the contents of the cell in front of the agent
             fwd_cell = self.grid.get(*fwd_pos)
+
+            if actions[i] == self.actions.left or \
+                actions[i] == self.actions.right or \
+                actions[i] == self.actions.still or \
+                actions[i] == self.actions.forward:
+                
+                rewards[i]+= -1
 
             # Rotate left
             if actions[i] == self.actions.left:
