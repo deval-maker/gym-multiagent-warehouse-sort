@@ -7,6 +7,7 @@ from gym.utils import seeding
 from .rendering import *
 from .window import Window
 import numpy as np
+import random
 
 # Size in pixels of a tile in the full-scale human view
 TILE_PIXELS = 32
@@ -55,7 +56,9 @@ class World:
         'lava': 9,
         'agent': 10,
         'objgoal': 11,
-        'switch': 12
+        'switch': 12,
+        'induct': 13,
+        'chute': 14,
     }
     IDX_TO_OBJECT = dict(zip(OBJECT_TO_IDX.values(), OBJECT_TO_IDX.keys()))
 
@@ -259,6 +262,69 @@ class Wall(WorldObj):
     def render(self, img):
         fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
 
+class Induct(WorldObj):
+    def __init__(self, world, color='yellow', n_packages=1):
+        super().__init__(world, 'induct', color)
+        self.package = None
+        self.world = world
+        self.n_packages = n_packages
+        self.generate_package()
+        
+    def can_pickup(self):
+        return True
+        
+    def render(self, img):
+        fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS["yellow"])
+        fill_coords(img, point_in_circle(0.5, 0.5, 0.31), COLORS[self.color])
+    
+    def give_package(self):
+        old_package = self.package
+        self.package = None
+        self.generate_package()
+        return old_package
+
+    def generate_package(self):
+        if self.package is None:
+            index = random.randrange(self.n_packages)
+            print("Generating New Package: ", index)
+            self.package = Ball(self.world, index)
+            self.color = self.package.color
+    
+    def encode(self, world, current_agent=False):
+        """Encode the a description of this object as a 3-tuple of integers"""
+        package_id = self.package.index if self.package else -1
+        if world.encode_dim==3:
+            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], package_id)
+        else:
+            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], package_id, 0, 0, 0)
+        
+class Chute(WorldObj):
+    def __init__(self, world, index, target_type='ball', reward=1, color=None):
+        if color is None:
+            super().__init__(world, 'chute', world.IDX_TO_COLOR[index])
+        else:
+            super().__init__(world, 'chute', world.IDX_TO_COLOR[color])
+        self.target_type = target_type
+        self.index = index
+        self.reward = reward
+        self.last_package = None
+
+    def render(self, img):
+        fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
+        if self.last_package:
+            fill_coords(img, point_in_circle(0.5, 0.5, 0.31), COLORS[self.last_package.color])
+    
+    def drop_package(self, package):
+        self.last_package = package
+
+    def encode(self, world, current_agent=False):
+        """Encode the a description of this object as a 3-tuple of integers"""
+        last_package_id = self.last_package.index if self.last_package else -1
+        if world.encode_dim==3:
+            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], last_package_id)
+        else:
+            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], last_package_id, 0, 0, 0)
+
 
 class Door(WorldObj):
     def __init__(self, world, color, is_open=False, is_locked=False):
@@ -351,6 +417,9 @@ class Ball(WorldObj):
         self.index = index
         self.reward = reward
 
+    def can_overlap(self):
+        return True
+
     def can_pickup(self):
         return True
 
@@ -383,7 +452,7 @@ class Box(WorldObj):
 
 
 class Agent(WorldObj):
-    def __init__(self, world, index=0, view_size=7):
+    def __init__(self, world, index=3, view_size=7):
         super(Agent, self).__init__(world, 'agent', world.IDX_TO_COLOR[index])
         self.pos = None
         self.dir = None
@@ -404,6 +473,8 @@ class Agent(WorldObj):
         # Rotate the agent based on its direction
         tri_fn = rotate_fn(tri_fn, cx=0.5, cy=0.5, theta=0.5 * math.pi * self.dir)
         fill_coords(img, tri_fn, c)
+        if self.carrying:
+            fill_coords(img, point_in_circle(0.5, 0.5, 0.18), COLORS[self.carrying.color])
 
     def encode(self, world, current_agent=False):
         """Encode the a description of this object as a 3-tuple of integers"""
@@ -848,6 +919,26 @@ class Actions:
     # Toggle/activate an object
     toggle = 6
 
+    # Done completing task
+    done = 7
+
+class WarehouseActions:
+    available=['still', 'left', 'right', 'forward', 'pickup', 'drop']
+
+    still = 0
+
+    # Turn left, turn right, move forward
+    left = 1
+    right = 2
+    forward = 3
+
+    # Pick up an object
+    pickup = 4
+    # Drop an object
+    drop = 5
+
+    # Toggle/activate an object
+    toggle = 6
     # Done completing task
     done = 7
 

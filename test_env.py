@@ -13,7 +13,7 @@ def main():
     if args.env == 'soccer':
         register(
             id='multigrid-soccer-v0',
-            entry_point='gym_multigrid.envs:SoccerGame4HEnv10x15N2',
+            entry_point='gym_multigrid.envs:WarehouseSortEnvN1',
         )
         env = gym.make('multigrid-soccer-v0')
 
@@ -34,6 +34,9 @@ def main():
 
         ac = [env.action_space.sample() for _ in range(nb_agents)]
 
+        ac = input('Enter')
+        print(ac)
+        ac = [int(ac)]
         obs, _, done, _ = env.step(ac)
 
         if done:
