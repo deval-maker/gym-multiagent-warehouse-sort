@@ -7,10 +7,12 @@ from stable_baselines3.ppo.policies import MlpPolicy
 
 from datetime import datetime
 
-now = datetime.now()
-current_time = now.strftime("%d_%m_%Y_%H_%M_%S")
-filename = "ppo_warehouse_sort_"+ str(current_time)
-print("Model will be saved at ", filename)
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--file', type=str, help='Model file to load')
+args = parser.parse_args()
+
 class CustomPolicy(MlpPolicy):
     def __init__(self, *args, **kwargs):
         super(CustomPolicy, self).__init__(*args, **kwargs,
@@ -29,12 +31,11 @@ register(
 env = gym.make('warehouse-sort-v0')
 
 model = PPO(CustomPolicy, env, verbose=1)
-model.learn(total_timesteps=50000)
-model.save(filename)
+model = PPO.load(args.file)
 
 obs = env.reset()
 while True:
     action, _states = model.predict(obs)
     obs, rewards, dones, info = env.step(action)
     env.render()
-
+    

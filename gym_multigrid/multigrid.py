@@ -1385,12 +1385,12 @@ class MultiGridEnv(gym.Env):
             # Get the contents of the cell in front of the agent
             fwd_cell = self.grid.get(*fwd_pos)
 
-            if actions[i] == self.actions.left or \
-                actions[i] == self.actions.right or \
-                actions[i] == self.actions.still or \
-                actions[i] == self.actions.forward:
+            # if actions[i] == self.actions.left or \
+            #     actions[i] == self.actions.right or \
+            #     actions[i] == self.actions.still or \
+            #     actions[i] == self.actions.forward:
                 
-                rewards[i]+= -1
+            rewards[i]+= -np.linalg.norm(self.agents[i].target_pos-self.agents[i].pos)/2
 
             # Rotate left
             if actions[i] == self.actions.left:
@@ -1458,6 +1458,7 @@ class MultiGridEnv(gym.Env):
 
         rewards = rewards.tolist()
         rewards = sum(rewards)
+        # print(rewards)
 
         return obs, rewards, done, {}
 
