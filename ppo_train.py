@@ -29,7 +29,7 @@ register(
 env = gym.make('warehouse-sort-v0')
 
 model = PPO(CustomPolicy, env, verbose=1)
-model.learn(total_timesteps=50000)
+model.learn(total_timesteps=120000)
 model.save(filename)
 
 obs = env.reset()
@@ -38,3 +38,5 @@ while True:
     obs, rewards, dones, info = env.step(action)
     env.render()
 
+    if dones:
+        env.reset()
