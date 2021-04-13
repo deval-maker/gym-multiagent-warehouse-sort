@@ -13,8 +13,8 @@ def main():
 
     obs = env.reset()
 
-    nb_agents = len(env.agents)
-    
+    n_agents = len(env.agents)
+
     debug = False
     if debug:
         mode = 'human'
@@ -24,13 +24,12 @@ def main():
     while True:
 
         env.render(mode=mode, highlight=False)
-        ac = [env.action_space.sample() for _ in range(nb_agents)]
+        ac = [env.action_space.sample() for _ in range(n_agents)]
 
         if debug:
             time.sleep(0.01)
             print(env)
-            print("Goal Positions:", obs[0])
-            print("Agent Positions:", obs[1])
+            print("Observations:", obs)
 
             ac = input('cmd >')
             ac = [int(ac)]

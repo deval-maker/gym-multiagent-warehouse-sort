@@ -300,7 +300,7 @@ class Induct(WorldObj):
 
     @property
     def target_pos(self):
-        return (self.cur_pos[0]+1, self.cur_pos[1])
+        return np.array([self.cur_pos[0]+1, self.cur_pos[1]])
         
 class Chute(WorldObj):
     def __init__(self, world, index, target_type='ball', reward=1, color=None):
@@ -331,7 +331,7 @@ class Chute(WorldObj):
 
     @property
     def target_pos(self):
-        return (self.cur_pos[0]-1, self.cur_pos[1])
+        return np.array([self.cur_pos[0]-1, self.cur_pos[1]])
 
 class Door(WorldObj):
     def __init__(self, world, color, is_open=False, is_locked=False):
@@ -531,7 +531,7 @@ class Agent(WorldObj):
     
     @property
     def current_pose(self):
-        return (self.pos[0], self.pos[1], self.dir)
+        return np.array([self.pos[0], self.pos[1], self.dir, 1 if self.carrying is not None else 0])
 
     def get_view_coords(self, i, j):
         """
@@ -1028,8 +1028,8 @@ class MultiGridEnv(gym.Env):
         else:
             self.observation_space = spaces.Box(
                 low=0,
-                high=255,
-                shape=(width, height, self.objects.encode_dim),
+                high=max(width, height),
+                shape=(len(self.agents), 6),
                 dtype='uint8'
             )
 
@@ -1087,13 +1087,10 @@ class MultiGridEnv(gym.Env):
 
         # Scheduling 
         self.schedule()
-        
-        goals = [a.target_pos for a in self.agents]
-        agent_poses = [a.current_pose for a in self.agents]
-        
-        obs.append(goals)
-        obs.append(agent_poses)
-        
+
+        obs = [np.hstack([a.current_pose, a.target_pos]) for a in self.agents]
+        obs = np.array(obs)
+                
         return obs
 
     def seed(self, seed=1337):
@@ -1451,11 +1448,8 @@ class MultiGridEnv(gym.Env):
         # Scheduling 
         self.schedule()
         
-        goals = [a.target_pos for a in self.agents]
-        agent_poses = [a.current_pose for a in self.agents]
-        
-        obs.append(goals)
-        obs.append(agent_poses)
+        obs = [np.hstack([a.current_pose, a.target_pos]) for a in self.agents]
+        obs = np.array(obs)
 
         return obs, rewards, done, {}
 
