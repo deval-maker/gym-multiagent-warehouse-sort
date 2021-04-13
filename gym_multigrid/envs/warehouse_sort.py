@@ -18,7 +18,7 @@ class WarehouseSortEnv(MultiGridEnv):
         balls_index=[],
         balls_pst=[],
         zero_sum = False,
-
+        is_train = True,
     ):
         self.num_balls = num_balls
         self.goal_pst = goal_pst
@@ -26,6 +26,7 @@ class WarehouseSortEnv(MultiGridEnv):
         self.balls_index = balls_index
         self.balls_pst = balls_pst
         self.zero_sum = zero_sum
+        self.is_train = is_train
 
         self.world = World
 
@@ -37,7 +38,7 @@ class WarehouseSortEnv(MultiGridEnv):
             grid_size=size,
             width=width,
             height=height,
-            max_steps= 800,
+            max_steps= 150,
             actions_set=WarehouseActions,
             partial_obs=False,
             # Set this to True for maximum speed
@@ -55,15 +56,17 @@ class WarehouseSortEnv(MultiGridEnv):
         self.grid.vert_wall(self.world, 0, 0)
         self.grid.vert_wall(self.world, width-1, 0)
 
-        for i in range(len(self.goal_pst)):
-            ch = Chute(self.world,self.goal_index[i], target_type='ball')
-            self.put_obj(ch, *self.goal_pst[i])
-            self.chutes.append(ch)
+        if not self.is_train:
+                
+            for i in range(len(self.goal_pst)):
+                ch = Chute(self.world,self.goal_index[i], target_type='ball')
+                self.put_obj(ch, *self.goal_pst[i])
+                self.chutes.append(ch)
 
-        for number in range(self.num_balls):
-            ind = Induct(self.world, n_packages=len(self.goal_index))
-            self.put_obj(ind, *self.balls_pst[number])
-            self.inducts.append(ind)
+            for number in range(self.num_balls):
+                ind = Induct(self.world, n_packages=len(self.goal_index))
+                self.put_obj(ind, *self.balls_pst[number])
+                self.inducts.append(ind)
             
         # Randomize the player start position and orientation
         for a in self.agents:
@@ -105,7 +108,7 @@ class WarehouseSortEnv(MultiGridEnv):
 
 class WarehouseSortEnvN1(WarehouseSortEnv):
     def __init__(self):
-        w = 5
+        w = 7
         super().__init__(size=None,
         height=7,
         width=w,
@@ -114,4 +117,5 @@ class WarehouseSortEnvN1(WarehouseSortEnv):
         agents_index = [0],
         num_balls=1,
         balls_pst=[[0,3]],
-        zero_sum=False)
+        zero_sum=False, 
+        is_train=True)

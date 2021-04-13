@@ -40,6 +40,7 @@ while True:
     obs, rewards, dones, info = env.step(action)
     print(action)
     print(obs)
+    print("Reward:", rewards)
     env.render()
     
     if dones:
