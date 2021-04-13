@@ -5,6 +5,12 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.ppo.policies import MlpPolicy
 
+from datetime import datetime
+
+now = datetime.now()
+current_time = now.strftime("%d_%m_%Y_%H_%M_%S")
+filename = "ppo_warehouse_sort_"+ str(current_time)
+print("Model will be saved at ", filename)
 class CustomPolicy(MlpPolicy):
     def __init__(self, *args, **kwargs):
         super(CustomPolicy, self).__init__(*args, **kwargs,
@@ -24,7 +30,7 @@ env = gym.make('warehouse-sort-v0')
 
 model = PPO(CustomPolicy, env, verbose=1)
 model.learn(total_timesteps=25000)
-model.save("ppo_warehouse_sort")
+model.save(filename)
 
 obs = env.reset()
 while True:
