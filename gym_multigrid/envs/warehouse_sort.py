@@ -79,11 +79,6 @@ class WarehouseSortEnv(MultiGridEnv):
             rewards[i]+=1
             return
 
-        # Package dropped at a random position
-        if not fwd_cell:
-            rewards[i]+=-20
-            return
-
         # Package dropped correctly
         if fwd_cell.index == package.index:
             rewards[i]+=10
@@ -107,6 +102,8 @@ class WarehouseSortEnv(MultiGridEnv):
                     self.agents[i].target_pos = self.chutes[chute_index].target_pos
                     
     def _handle_drop(self, i, rewards, fwd_pos, fwd_cell):
+        done = False
+
         if self.agents[i].carrying:
             chute_pos = self.agents[i].pos + np.array([1,0])
             chute_cell = self.grid.get(*chute_pos)
@@ -117,10 +114,17 @@ class WarehouseSortEnv(MultiGridEnv):
                     self.agents[i].carrying.cur_pos = fwd_pos
                     self.agents[i].carrying = None
             else:
-                self._reward(i, rewards, fwd_cell, self.agents[i].carrying)
-                self.grid.set(*fwd_pos, self.agents[i].carrying)
-                self.agents[i].carrying.cur_pos = fwd_pos
-                self.agents[i].carrying = None
+                # Package dropped at a random position
+                done = True
+                rewards[i]+=-20
+                print("Dropping at non-chute position")
+                # if fwd_cell.type == 'agent' or fwd_cell.type == 'induct':
+                # self._reward(i, rewards, fwd_cell, self.agents[i].carrying)
+                # self.grid.set(*fwd_pos, self.agents[i].carrying)
+                # self.agents[i].carrying.cur_pos = fwd_pos
+                # self.agents[i].carrying = None
+        
+        return done
 
 
     def step(self, actions):

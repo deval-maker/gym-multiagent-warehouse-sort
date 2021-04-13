@@ -1368,6 +1368,7 @@ class MultiGridEnv(gym.Env):
 
         rewards = np.zeros(len(actions))
         done = False
+        done_agents = [False for _ in range(len(self.agents))]
 
         for i in order:
 
@@ -1400,12 +1401,7 @@ class MultiGridEnv(gym.Env):
             # Move forward
             elif actions[i] == self.actions.forward:
                 if fwd_cell is not None:
-                    if fwd_cell.type == 'goal':
-                        done = True
-                        self._reward(i, rewards, 1)
-                    elif fwd_cell.type == 'switch':
-                        self._handle_switch(i, rewards, fwd_pos, fwd_cell)
-                    elif fwd_cell.type == 'agent':
+                    if fwd_cell.type == 'agent':
                         rewards[i]+= -20
                 elif fwd_cell is None or fwd_cell.can_overlap():
                     self.grid.set(*fwd_pos, self.agents[i])
@@ -1422,7 +1418,8 @@ class MultiGridEnv(gym.Env):
 
             # Drop an object
             elif actions[i] == self.actions.drop:
-                self._handle_drop(i, rewards, fwd_pos, fwd_cell)
+                done_agent = self._handle_drop(i, rewards, fwd_pos, fwd_cell)
+                done_agents[i] = done_agent
 
             # Toggle/activate an object
             elif actions[i] == self.actions.toggle:
@@ -1435,6 +1432,9 @@ class MultiGridEnv(gym.Env):
 
             else:
                 assert False, "unknown action"
+        
+        if any(done_agents):
+            done = True
 
         if self.step_count >= self.max_steps:
             done = True
