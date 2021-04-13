@@ -1,8 +1,6 @@
 import gym
 import time
 from gym.envs.registration import register
-import argparse
-
 
 def main():
 
