@@ -7,10 +7,11 @@ import argparse
 def main():
 
     register(
-        id='multigrid-soccer-v0', 
+        id='warehouse-sort-v0', 
         entry_point='gym_multigrid.envs:WarehouseSortEnvN1'
-        )
-    env = gym.make('multigrid-soccer-v0')
+    )
+    
+    env = gym.make('warehouse-sort-v0')
 
     obs = env.reset()
 
@@ -24,10 +25,11 @@ def main():
 
     while True:
 
-        env.render(mode=mode, highlight=True)
+        env.render(mode=mode, highlight=False)
         ac = [env.action_space.sample() for _ in range(nb_agents)]
 
         if debug:
+            time.sleep(0.01)
             print(env)
             print("Goal Positions:", obs[0])
             print("Agent Positions:", obs[1])
@@ -37,12 +39,14 @@ def main():
 
             print("Past Actions:", ac)
             print(env.step_count)
+        
         obs, rewards, done, _ = env.step(ac)
 
         if debug: 
             print("Rewards:", rewards)
 
         if done:
+            print(env.step_count)
             break
 
 if __name__ == "__main__":
