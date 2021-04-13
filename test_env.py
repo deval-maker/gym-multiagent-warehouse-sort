@@ -27,25 +27,32 @@ def main():
     obs = env.reset()
 
     nb_agents = len(env.agents)
+    
+    debug = False
+    if debug:
+        mode = 'human'
+    else:
+        mode = 'rgb-array'
 
     while True:
-        env.render(mode='human', highlight=True)
-        time.sleep(0.1)
 
+        env.render(mode=mode, highlight=True)
         ac = [env.action_space.sample() for _ in range(nb_agents)]
 
-        print(env)
-        print("Goal Positions:", obs[1])
-        print("Agent Positions:", obs[2])
+        if debug:
+            print(env)
+            print("Goal Positions:", obs[0])
+            print("Agent Positions:", obs[1])
 
-        ac = input('cmd >')
-        ac = [int(ac)]
+            ac = input('cmd >')
+            ac = [int(ac)]
 
-        print("Past Actions:", ac)
-        
+            print("Past Actions:", ac)
+            print(env.step_count)
         obs, rewards, done, _ = env.step(ac)
 
-        print("Rewards:", rewards)
+        if debug: 
+            print("Rewards:", rewards)
 
         if done:
             break

@@ -286,7 +286,7 @@ class Induct(WorldObj):
     def generate_package(self):
         if self.package is None:
             index = random.randrange(self.n_packages)
-            print("Generating New Package: ", index)
+            # print("Generating New Package: ", index)
             self.package = Ball(self.world, index)
             self.color = self.package.color
     
@@ -1076,13 +1076,15 @@ class MultiGridEnv(gym.Env):
         # Step count since episode start
         self.step_count = 0
 
-        # Return first observation
-        if self.partial_obs:
-            obs = self.gen_obs()
-        else:
-            obs = [self.grid.encode_for_agents(self.objects, self.agents[i].pos) for i in range(len(self.agents))]
-        obs=[self.objects.normalize_obs*ob for ob in obs]
+        # # Return first observation
+        # if self.partial_obs:
+        #     obs = self.gen_obs()
+        # else:
+        #     obs = [self.grid.encode_for_agents(self.objects, self.agents[i].pos) for i in range(len(self.agents))]
+        # obs=[self.objects.normalize_obs*ob for ob in obs]
         
+        obs = []
+
         # Scheduling 
         self.schedule()
         
@@ -1390,9 +1392,7 @@ class MultiGridEnv(gym.Env):
 
             # Rotate left
             if actions[i] == self.actions.left:
-                self.agents[i].dir -= 1
-                if self.agents[i].dir < 0:
-                    self.agents[i].dir += 4
+                self.agents[i].dir = (self.agents[i].dir - 1 + 4) % 4
 
             # Rotate right
             elif actions[i] == self.actions.right:
@@ -1439,12 +1439,14 @@ class MultiGridEnv(gym.Env):
         if self.step_count >= self.max_steps:
             done = True
 
-        if self.partial_obs:
-            obs = self.gen_obs()
-        else:
-            obs = [self.grid.encode_for_agents(self.objects, self.agents[i].pos) for i in range(len(actions))]
+        # if self.partial_obs:
+        #     obs = self.gen_obs()
+        # else:
+        #     obs = [self.grid.encode_for_agents(self.objects, self.agents[i].pos) for i in range(len(actions))]
 
-        obs=[self.objects.normalize_obs*ob for ob in obs]
+        # obs=[self.objects.normalize_obs*ob for ob in obs]
+        
+        obs = []
 
         # Scheduling 
         self.schedule()
