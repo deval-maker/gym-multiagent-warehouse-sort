@@ -6,7 +6,7 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.ppo.policies import MlpPolicy
 
 from datetime import datetime
-
+import time
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -35,6 +35,7 @@ model = PPO.load(args.file)
 
 obs = env.reset()
 while True:
+    time.sleep(0.1)
     action, _states = model.predict(obs)
     obs, rewards, dones, info = env.step(action)
     print(action)

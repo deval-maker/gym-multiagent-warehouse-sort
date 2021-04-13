@@ -470,7 +470,6 @@ class Agent(WorldObj):
         self.started = True
         self.paused = False
         self.target_pos = None
-        self.reward_once = True
     
     def reset(self):
         self.carrying = None
@@ -478,7 +477,6 @@ class Agent(WorldObj):
         self.started = True
         self.paused = False
         self.target_pos = None
-        self.reward_once = True
 
     def render(self, img):
         c = COLORS[self.color]
@@ -944,7 +942,7 @@ class Actions:
     done = 7
 
 class WarehouseActions:
-    available=['still', 'left', 'right', 'forward', 'pickup', 'drop']
+    available=['still', 'left', 'right', 'forward']
 
     still = 0
 
@@ -1046,7 +1044,7 @@ class MultiGridEnv(gym.Env):
         self.ac_dim = self.action_space.n
 
         # Range of possible rewards
-        self.reward_range = (-100, 200)
+        # self.reward_range = (-50, 100)
 
         # Window to use for human rendering mode
         self.window = None
@@ -1383,13 +1381,7 @@ class MultiGridEnv(gym.Env):
 
         for i in order:
             
-            if self.agents[i].carrying:
-                rewards[i]+= -np.linalg.norm(self.agents[i].target_pos-self.agents[i].pos)/5 - 0.2
-                # rewards[i]+= 10*np.exp()
-            else:
-                rewards[i]+= -np.linalg.norm(self.agents[i].target_pos-self.agents[i].pos)/2 - 0.5
-
-            if self.agents[i].terminated or self.agents[i].paused or not self.agents[i].started or actions[i] == self.actions.still:
+            if self.agents[i].terminated or self.agents[i].paused or not self.agents[i].started:
                 continue
 
             # Get the position in front of the agent
@@ -1403,8 +1395,11 @@ class MultiGridEnv(gym.Env):
             #     actions[i] == self.actions.still or \
             #     actions[i] == self.actions.forward:
 
+            if actions[i] == self.actions.still:
+                pass
+            
             # Rotate left
-            if actions[i] == self.actions.left:
+            elif actions[i] == self.actions.left:
                 self.agents[i].dir = (self.agents[i].dir - 1 + 4) % 4
 
             # Rotate right
@@ -1415,54 +1410,30 @@ class MultiGridEnv(gym.Env):
             elif actions[i] == self.actions.forward:
                 if fwd_cell is not None:
                     if fwd_cell.type == 'agent':
-                        rewards[i]+= -50
+                        rewards[i]+= -10
                 elif fwd_cell is None or fwd_cell.can_overlap():
                     self.grid.set(*fwd_pos, self.agents[i])
                     self.grid.set(*self.agents[i].pos, None)
                     self.agents[i].pos = fwd_pos
                 self._handle_special_moves(i, rewards, fwd_pos, fwd_cell)
 
-            elif 'build' in self.actions.available and actions[i]==self.actions.build:
-                self._handle_build(i, rewards, fwd_pos, fwd_cell)
-
-            # Pick up an object
-            elif actions[i] == self.actions.pickup:
-                self._handle_pickup(i, rewards, fwd_pos, fwd_cell)
-
-            # Drop an object
-            elif actions[i] == self.actions.drop:
-                done_agent = self._handle_drop(i, rewards, fwd_pos, fwd_cell)
-                done_agents[i] = done_agent
-
-            # Toggle/activate an object
-            elif actions[i] == self.actions.toggle:
-                if fwd_cell:
-                    fwd_cell.toggle(self, fwd_pos)
-
-            # Done action (not used by default)
-            elif actions[i] == self.actions.done:
-                pass
-
             else:
-                assert False, "unknown action"
+                assert False, f"unknown action, {actions[i]}"
 
-            if self.agents[i].reward_once and np.all(self.agents[i].target_pos == self.agents[i].pos):
-                rewards[i]+=10
-                self.agents[i].reward_once = False
+            if tuple(self.agents[i].target_pos) == tuple(self.agents[i].pos):
+                if  self.agents[i].carrying:
+                    self._handle_drop(i, rewards, fwd_pos, fwd_cell)
+                else:
+                    self._handle_pickup(i, rewards, fwd_pos, fwd_cell)
+            else:
+                rewards[i]+= -np.linalg.norm(self.agents[i].target_pos-self.agents[i].pos)
         
         if any(done_agents):
             done = True
 
         if self.step_count >= self.max_steps:
             done = True
-
-        # if self.partial_obs:
-        #     obs = self.gen_obs()
-        # else:
-        #     obs = [self.grid.encode_for_agents(self.objects, self.agents[i].pos) for i in range(len(actions))]
-
-        # obs=[self.objects.normalize_obs*ob for ob in obs]
-        
+       
         # Scheduling 
         self.schedule()
         
@@ -1471,8 +1442,7 @@ class MultiGridEnv(gym.Env):
 
         rewards = rewards.tolist()
         rewards = sum(rewards)
-        print(rewards)
-
+        
         return obs, rewards, done, {}
 
     def schedule(self):
@@ -1482,7 +1452,6 @@ class MultiGridEnv(gym.Env):
                 # Random Scheduling
                 induct_id = random.randrange(len(self.inducts))
                 agent.target_pos = self.inducts[induct_id].target_pos
-                agent.reward_once = True
     
 
     def gen_obs_grid(self):

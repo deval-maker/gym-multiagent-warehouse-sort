@@ -69,69 +69,33 @@ class WarehouseSortEnv(MultiGridEnv):
         for a in self.agents:
             self.place_agent(a)
 
-    def _reward(self, i, rewards, fwd_cell, package, is_pickup=False):
-        """ 
-        Reward for the warehouse_sort. DO NOT CHANGE ORDER OF `if` statements.
-        """
-
-        # Package picked up
-        if is_pickup:
-            rewards[i]+=100
-            return
-
-        # Package dropped correctly
-        if fwd_cell.index == package.index:
-            rewards[i]+=250
-            print("Good Job !!")
-            return
-
-        # Package dropped at a wrong chute 
-        if fwd_cell.index != package.index:
-            rewards[i]+=-20
-            return
-            
-
     def _handle_pickup(self, i, rewards, fwd_pos, fwd_cell):
-        if tuple(self.agents[i].target_pos) == tuple(self.agents[i].pos):
-            induct_pos = self.agents[i].pos + np.array([-1,0])
-            induct_cell = self.grid.get(*induct_pos)
-            if induct_cell and induct_cell.type=="induct":
-                if self.agents[i].carrying is None:
-                    self.agents[i].carrying = induct_cell.give_package()
-                    self.agents[i].carrying.cur_pos = np.array([-1, -1])
-                    self._reward(i, rewards, induct_cell, self.agents[i].carrying, is_pickup=True)
-                    chute_index = self.agents[i].carrying.index
-                    self.agents[i].target_pos = self.chutes[chute_index].target_pos
-                    self.agents[i].reward_once = True
-                else:
-                    rewards[i]+=-10
+        # if tuple(self.agents[i].target_pos) == tuple(self.agents[i].pos):
+        induct_pos = self.agents[i].pos + np.array([-1,0])
+        induct_cell = self.grid.get(*induct_pos)
+        if induct_cell and induct_cell.type=="induct":
+            rewards[i]+=10
+            self.agents[i].carrying = induct_cell.give_package()
+            self.agents[i].carrying.cur_pos = np.array([-1, -1])
+            # self._reward(i, rewards, induct_cell, self.agents[i].carrying, is_pickup=True)
+            chute_index = self.agents[i].carrying.index
+            self.agents[i].target_pos = self.chutes[chute_index].target_pos
+        else:
+            assert False, "Target position set wrongly somewhere, Pickup"
 
     def _handle_drop(self, i, rewards, fwd_pos, fwd_cell):
-        done = False
 
-        if self.agents[i].carrying:
-            chute_pos = self.agents[i].pos + np.array([1,0])
-            chute_cell = self.grid.get(*chute_pos)
-            if chute_cell:
-                if chute_cell.type == 'chute' and chute_cell.target_type == self.agents[i].carrying.type:
-                    self._reward(i, rewards, chute_cell, self.agents[i].carrying)
-                    chute_cell.drop_package(self.agents[i].carrying)
-                    self.agents[i].carrying.cur_pos = fwd_pos
-                    self.agents[i].carrying = None
-                    self.agents[i].target_pos = None
-            else:
-                # Package dropped at a random position
-                done = True
-                rewards[i]+=-20
-                print("Dropping at non-chute position")
-                # if fwd_cell.type == 'agent' or fwd_cell.type == 'induct':
-                # self._reward(i, rewards, fwd_cell, self.agents[i].carrying)
-                self.grid.set(*fwd_pos, self.agents[i].carrying)
-                self.agents[i].carrying.cur_pos = fwd_pos
-                self.agents[i].carrying = None
-                self.agents[i].target_pos = None
-        
-        return done
+        chute_pos = self.agents[i].pos + np.array([1,0])
+        chute_cell = self.grid.get(*chute_pos)
+        if chute_cell and chute_cell.type == 'chute' and chute_cell.target_type == self.agents[i].carrying.type:
+            rewards[i]+=10
+            # self._reward(i, rewards, chute_cell, self.agents[i].carrying)
+            chute_cell.drop_package(self.agents[i].carrying)
+            self.agents[i].carrying.cur_pos = fwd_pos
+            self.agents[i].carrying = None
+            self.agents[i].target_pos = None
+        else:
+            assert False, "Target position set wrongly somewhere, Drop"
 
 
     def step(self, actions):
