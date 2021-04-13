@@ -24,7 +24,7 @@ def main():
         )
         env = gym.make('multigrid-collect-v0')
 
-    _ = env.reset()
+    obs = env.reset()
 
     nb_agents = len(env.agents)
 
@@ -34,10 +34,18 @@ def main():
 
         ac = [env.action_space.sample() for _ in range(nb_agents)]
 
+        print(env)
+        print("Goal Positions:", obs[1])
+        print("Agent Positions:", obs[2])
+
         ac = input('cmd >')
         ac = [int(ac)]
+
+        print("Past Actions:", ac)
+        
         obs, rewards, done, _ = env.step(ac)
-        print(rewards)
+
+        print("Rewards:", rewards)
 
         if done:
             break

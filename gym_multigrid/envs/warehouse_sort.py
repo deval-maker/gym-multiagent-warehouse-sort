@@ -39,6 +39,7 @@ class WarehouseSortEnv(MultiGridEnv):
             height=height,
             max_steps= 10000,
             actions_set=WarehouseActions,
+            partial_obs=False,
             # Set this to True for maximum speed
             see_through_walls=True,
             agents=agents,
@@ -55,11 +56,15 @@ class WarehouseSortEnv(MultiGridEnv):
         self.grid.vert_wall(self.world, width-1, 0)
 
         for i in range(len(self.goal_pst)):
-            self.put_obj(Chute(self.world,self.goal_index[i], 'ball'), *self.goal_pst[i])
+            ch = Chute(self.world,self.goal_index[i], target_type='ball')
+            self.put_obj(ch, *self.goal_pst[i])
+            self.chutes.append(ch)
 
         for number in range(self.num_balls):
-            self.put_obj(Induct(self.world, n_packages=len(self.goal_index)), *self.balls_pst[number])
-
+            ind = Induct(self.world, n_packages=len(self.goal_index))
+            self.put_obj(ind, *self.balls_pst[number])
+            self.inducts.append(ind)
+            
         # Randomize the player start position and orientation
         for a in self.agents:
             self.place_agent(a)
@@ -97,8 +102,9 @@ class WarehouseSortEnv(MultiGridEnv):
                     self.agents[i].carrying = fwd_cell.give_package()
                     self.agents[i].carrying.cur_pos = np.array([-1, -1])
                     self._reward(i, rewards, fwd_cell, self.agents[i].carrying, is_pickup=True)
-                    # self.grid.set(*fwd_pos, None)
-
+                    chute_index = self.agents[i].carrying.index
+                    self.agents[i].target_pos = self.chutes[chute_index].target_pos
+                    
     def _handle_drop(self, i, rewards, fwd_pos, fwd_cell):
         if self.agents[i].carrying:
             if fwd_cell:

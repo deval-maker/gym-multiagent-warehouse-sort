@@ -297,6 +297,10 @@ class Induct(WorldObj):
             return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], package_id)
         else:
             return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], package_id, 0, 0, 0)
+
+    @property
+    def target_pos(self):
+        return (self.cur_pos[0]+1, self.cur_pos[1])
         
 class Chute(WorldObj):
     def __init__(self, world, index, target_type='ball', reward=1, color=None):
@@ -325,6 +329,9 @@ class Chute(WorldObj):
         else:
             return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], last_package_id, 0, 0, 0)
 
+    @property
+    def target_pos(self):
+        return (self.cur_pos[0]-1, self.cur_pos[1])
 
 class Door(WorldObj):
     def __init__(self, world, color, is_open=False, is_locked=False):
@@ -462,6 +469,7 @@ class Agent(WorldObj):
         self.terminated = False
         self.started = True
         self.paused = False
+        self.target_pos = None
 
     def render(self, img):
         c = COLORS[self.color]
@@ -520,6 +528,10 @@ class Agent(WorldObj):
         """
 
         return self.pos + self.dir_vec
+    
+    @property
+    def current_pose(self):
+        return (self.pos[0], self.pos[1], self.dir)
 
     def get_view_coords(self, i, j):
         """
@@ -1030,6 +1042,9 @@ class MultiGridEnv(gym.Env):
         # Window to use for human rendering mode
         self.window = None
 
+        self.chutes = []
+        self.inducts = []
+
         # Environment configuration
         self.width = width
         self.height = height
@@ -1065,8 +1080,18 @@ class MultiGridEnv(gym.Env):
         if self.partial_obs:
             obs = self.gen_obs()
         else:
-            obs = [self.grid.encode_for_agents(self.agents[i].pos) for i in range(len(self.agents))]
+            obs = [self.grid.encode_for_agents(self.objects, self.agents[i].pos) for i in range(len(self.agents))]
         obs=[self.objects.normalize_obs*ob for ob in obs]
+        
+        # Scheduling 
+        self.schedule()
+        
+        goals = [a.target_pos for a in self.agents]
+        agent_poses = [a.current_pose for a in self.agents]
+        
+        obs.append(goals)
+        obs.append(agent_poses)
+        
         return obs
 
     def seed(self, seed=1337):
@@ -1095,6 +1120,8 @@ class MultiGridEnv(gym.Env):
             'box': 'B',
             'goal': 'G',
             'lava': 'V',
+            'chute': 'C',
+            'induct': "I",
         }
 
         # Short string for opened door
@@ -1113,14 +1140,14 @@ class MultiGridEnv(gym.Env):
         for j in range(self.grid.height):
 
             for i in range(self.grid.width):
-                if i == self.agent_pos[0] and j == self.agent_pos[1]:
-                    str += 2 * AGENT_DIR_TO_STR[self.agent_dir]
-                    continue
-
                 c = self.grid.get(i, j)
 
                 if c == None:
-                    str += '  '
+                    str += ' '
+                    continue
+                
+                if c.type == 'agent':
+                    str += AGENT_DIR_TO_STR[c.dir]
                     continue
 
                 if c.type == 'door':
@@ -1132,7 +1159,7 @@ class MultiGridEnv(gym.Env):
                         str += 'D' + c.color[0].upper()
                     continue
 
-                str += OBJECT_TO_STR[c.type] + c.color[0].upper()
+                str += OBJECT_TO_STR[c.type]# + c.color[0].upper()
 
             if j < self.grid.height - 1:
                 str += '\n'
@@ -1415,11 +1442,29 @@ class MultiGridEnv(gym.Env):
         if self.partial_obs:
             obs = self.gen_obs()
         else:
-            obs = [self.grid.encode_for_agents(self.agents[i].pos) for i in range(len(actions))]
+            obs = [self.grid.encode_for_agents(self.objects, self.agents[i].pos) for i in range(len(actions))]
 
         obs=[self.objects.normalize_obs*ob for ob in obs]
 
+        # Scheduling 
+        self.schedule()
+        
+        goals = [a.target_pos for a in self.agents]
+        agent_poses = [a.current_pose for a in self.agents]
+        
+        obs.append(goals)
+        obs.append(agent_poses)
+
         return obs, rewards, done, {}
+
+    def schedule(self):
+        
+        for agent in self.agents:
+            if agent.target_pos is None:
+                # Random Scheduling
+                induct_id = random.randrange(len(self.inducts))
+                agent.target_pos = self.inducts[induct_id].target_pos
+                
 
     def gen_obs_grid(self):
         """
