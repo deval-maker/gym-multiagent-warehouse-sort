@@ -16,7 +16,7 @@ def main():
 
     n_agents = len(env.agents)
 
-    debug = False
+    debug = True
     if debug:
         mode = 'human'
     else:

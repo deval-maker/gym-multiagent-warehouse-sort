@@ -37,7 +37,7 @@ class WarehouseSortEnv(MultiGridEnv):
             grid_size=size,
             width=width,
             height=height,
-            max_steps= 250,
+            max_steps= 800,
             actions_set=WarehouseActions,
             partial_obs=False,
             # Set this to True for maximum speed
@@ -74,7 +74,7 @@ class WarehouseSortEnv(MultiGridEnv):
         induct_pos = self.agents[i].pos + np.array([-1,0])
         induct_cell = self.grid.get(*induct_pos)
         if induct_cell and induct_cell.type=="induct":
-            rewards[i]+=10
+            rewards[i]+=50
             self.agents[i].carrying = induct_cell.give_package()
             self.agents[i].carrying.cur_pos = np.array([-1, -1])
             # self._reward(i, rewards, induct_cell, self.agents[i].carrying, is_pickup=True)
@@ -88,7 +88,7 @@ class WarehouseSortEnv(MultiGridEnv):
         chute_pos = self.agents[i].pos + np.array([1,0])
         chute_cell = self.grid.get(*chute_pos)
         if chute_cell and chute_cell.type == 'chute' and chute_cell.target_type == self.agents[i].carrying.type:
-            rewards[i]+=10
+            rewards[i]+=50
             # self._reward(i, rewards, chute_cell, self.agents[i].carrying)
             chute_cell.drop_package(self.agents[i].carrying)
             self.agents[i].carrying.cur_pos = fwd_pos

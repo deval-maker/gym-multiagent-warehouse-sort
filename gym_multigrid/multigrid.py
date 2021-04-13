@@ -1411,6 +1411,7 @@ class MultiGridEnv(gym.Env):
                 if fwd_cell is not None:
                     if fwd_cell.type == 'agent':
                         rewards[i]+= -10
+                        done_agents[i] = True
                 elif fwd_cell is None or fwd_cell.can_overlap():
                     self.grid.set(*fwd_pos, self.agents[i])
                     self.grid.set(*self.agents[i].pos, None)
@@ -1426,7 +1427,7 @@ class MultiGridEnv(gym.Env):
                 else:
                     self._handle_pickup(i, rewards, fwd_pos, fwd_cell)
             else:
-                rewards[i]+= -np.linalg.norm(self.agents[i].target_pos-self.agents[i].pos)
+                rewards[i]+= -np.linalg.norm(self.agents[i].target_pos-self.agents[i].pos) * 1.5
         
         if any(done_agents):
             done = True

@@ -29,7 +29,7 @@ register(
 env = gym.make('warehouse-sort-v0')
 
 model = PPO(CustomPolicy, env, verbose=1)
-model.learn(total_timesteps=100000)
+model.learn(total_timesteps=50000)
 model.save(filename)
 
 obs = env.reset()
