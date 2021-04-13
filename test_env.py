@@ -3,26 +3,14 @@ import time
 from gym.envs.registration import register
 import argparse
 
-parser = argparse.ArgumentParser(description=None)
-parser.add_argument('-e', '--env', default='soccer', type=str)
-
-args = parser.parse_args()
 
 def main():
 
-    if args.env == 'soccer':
-        register(
-            id='multigrid-soccer-v0',
-            entry_point='gym_multigrid.envs:WarehouseSortEnvN1',
+    register(
+        id='multigrid-soccer-v0', 
+        entry_point='gym_multigrid.envs:WarehouseSortEnvN1'
         )
-        env = gym.make('multigrid-soccer-v0')
-
-    else:
-        register(
-            id='multigrid-collect-v0',
-            entry_point='gym_multigrid.envs:CollectGame4HEnv10x10N2',
-        )
-        env = gym.make('multigrid-collect-v0')
+    env = gym.make('multigrid-soccer-v0')
 
     obs = env.reset()
 
