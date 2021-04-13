@@ -96,21 +96,24 @@ class WarehouseSortEnv(MultiGridEnv):
                
 
     def _handle_pickup(self, i, rewards, fwd_pos, fwd_cell):
-        if fwd_cell:
-            if fwd_cell.can_pickup():
-                if self.agents[i].carrying is None and fwd_cell.type=="induct":
-                    self.agents[i].carrying = fwd_cell.give_package()
+        if self.agents[i].target_pos == tuple(self.agents[i].pos):
+            induct_pos = self.agents[i].pos + np.array([-1,0])
+            induct_cell = self.grid.get(*induct_pos)
+            if self.agents[i].carrying is None and induct_cell.type=="induct":
+                    self.agents[i].carrying = induct_cell.give_package()
                     self.agents[i].carrying.cur_pos = np.array([-1, -1])
-                    self._reward(i, rewards, fwd_cell, self.agents[i].carrying, is_pickup=True)
+                    self._reward(i, rewards, induct_cell, self.agents[i].carrying, is_pickup=True)
                     chute_index = self.agents[i].carrying.index
                     self.agents[i].target_pos = self.chutes[chute_index].target_pos
                     
     def _handle_drop(self, i, rewards, fwd_pos, fwd_cell):
         if self.agents[i].carrying:
-            if fwd_cell:
-                if fwd_cell.type == 'chute' and fwd_cell.target_type == self.agents[i].carrying.type:
-                    self._reward(i, rewards, fwd_cell, self.agents[i].carrying)
-                    fwd_cell.drop_package(self.agents[i].carrying)
+            chute_pos = self.agents[i].pos + np.array([1,0])
+            chute_cell = self.grid.get(*chute_pos)
+            if chute_cell:
+                if chute_cell.type == 'chute' and chute_cell.target_type == self.agents[i].carrying.type:
+                    self._reward(i, rewards, chute_cell, self.agents[i].carrying)
+                    chute_cell.drop_package(self.agents[i].carrying)
                     self.agents[i].carrying.cur_pos = fwd_pos
                     self.agents[i].carrying = None
             else:
