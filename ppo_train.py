@@ -22,15 +22,9 @@ register(
 
 env = gym.make('warehouse-sort-v0')
 
-# from IPython import embed; embed()
-
 model = PPO(CustomPolicy, env, verbose=1)
 model.learn(total_timesteps=25000)
 model.save("ppo_warehouse_sort")
-
-# del model # remove to demonstrate saving and loading
-
-# model = PPO.load("ppo_warehouse_sort")
 
 obs = env.reset()
 while True:

@@ -1361,6 +1361,11 @@ class MultiGridEnv(gym.Env):
         return obs_cell is not None and obs_cell.type == world_cell.type
 
     def step(self, actions):
+        
+        # Handle Single Agent case
+        if actions.ndim == 0:
+            actions = [ np.array(actions.tolist()) ]
+
         self.step_count += 1
 
         order = np.random.permutation(len(actions))
@@ -1450,6 +1455,9 @@ class MultiGridEnv(gym.Env):
         
         obs = [np.hstack([a.current_pose, a.target_pos]) for a in self.agents]
         obs = np.array(obs)
+
+        rewards = rewards.tolist()
+        rewards = sum(rewards)
 
         return obs, rewards, done, {}
 

@@ -1,6 +1,7 @@
 import gym
 import time
 from gym.envs.registration import register
+import numpy as np
 
 def main():
 
@@ -37,6 +38,7 @@ def main():
             print("Past Actions:", ac)
             print(env.step_count)
         
+        ac = np.array(ac)
         obs, rewards, done, _ = env.step(ac)
 
         if debug: 

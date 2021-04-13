@@ -94,7 +94,8 @@ class WarehouseSortEnv(MultiGridEnv):
         if tuple(self.agents[i].target_pos) == tuple(self.agents[i].pos):
             induct_pos = self.agents[i].pos + np.array([-1,0])
             induct_cell = self.grid.get(*induct_pos)
-            if self.agents[i].carrying is None and induct_cell.type=="induct":
+            if induct_cell:
+                if self.agents[i].carrying is None and induct_cell.type=="induct":
                     self.agents[i].carrying = induct_cell.give_package()
                     self.agents[i].carrying.cur_pos = np.array([-1, -1])
                     self._reward(i, rewards, induct_cell, self.agents[i].carrying, is_pickup=True)
