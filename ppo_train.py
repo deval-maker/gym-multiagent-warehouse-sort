@@ -14,7 +14,7 @@ print("Model will be saved at ", filename)
 class CustomPolicy(MlpPolicy):
     def __init__(self, *args, **kwargs):
         super(CustomPolicy, self).__init__(*args, **kwargs,
-                                           net_arch=[16, 16, dict(pi=[10], vf=[8, 4])])
+            net_arch=[64, 64, dict(pi=[64, 64], vf=[64, 64])])
 
     def _get_torch_save_params(self):
         state_dicts = ["policy", "policy.optimizer", "policy.lr_scheduler"]
@@ -29,7 +29,7 @@ register(
 env = gym.make('warehouse-sort-v0')
 
 model = PPO(CustomPolicy, env, verbose=1)
-model.learn(total_timesteps=100000)
+model.learn(total_timesteps=10000)
 model.save(filename)
 
 obs = env.reset()

@@ -34,7 +34,8 @@ model = PPO(CustomPolicy, env, verbose=1)
 model = PPO.load(args.file)
 
 obs = env.reset()
-while True:
+dones = False
+while not dones:
     time.sleep(0.1)
     action, _states = model.predict(obs)
     obs, rewards, dones, info = env.step(action)
@@ -43,6 +44,6 @@ while True:
     print("Reward:", rewards)
     env.render()
     
-    if dones:
-        env.reset()
+    # if dones:
+        # env.reset()
     

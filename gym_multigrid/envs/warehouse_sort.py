@@ -38,7 +38,7 @@ class WarehouseSortEnv(MultiGridEnv):
             grid_size=size,
             width=width,
             height=height,
-            max_steps= 150,
+            max_steps= 100,
             actions_set=WarehouseActions,
             partial_obs=False,
             # Set this to True for maximum speed

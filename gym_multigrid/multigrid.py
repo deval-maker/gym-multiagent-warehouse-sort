@@ -1416,10 +1416,10 @@ class MultiGridEnv(gym.Env):
             elif actions[i] == self.actions.forward:
                 if fwd_cell is not None and fwd_cell.type == 'agent':
                     rewards[i]+= -10
-                    done_agents[i] = True
+                    # done_agents[i] = True
                 elif fwd_cell is not None and fwd_cell.type == 'wall':
-                    rewards[i]+= -10000
-                    done_agents[i] = True
+                    rewards[i]+= -10
+                    # done_agents[i] = True
                 elif fwd_cell is None or fwd_cell.can_overlap():
                     self.grid.set(*fwd_pos, self.agents[i])
                     self.grid.set(*self.agents[i].pos, None)
@@ -1430,16 +1430,16 @@ class MultiGridEnv(gym.Env):
                 assert False, f"unknown action, {actions[i]}"
 
             if tuple(self.agents[i].target_pos) == tuple(self.agents[i].pos):
-                if  self.agents[i].carrying:
-                    self._handle_drop(i, rewards, fwd_pos, fwd_cell)
-                elif not self.is_train:
-                    self._handle_pickup(i, rewards, fwd_pos, fwd_cell)
-                else:
-                    rewards[i]+= 10000
-                    done_agents[i] = True
-                    # print("\t\t\t Reached Goal")
+                # if  self.agents[i].carrying:
+                #     self._handle_drop(i, rewards, fwd_pos, fwd_cell)
+                # elif not self.is_train:
+                #     self._handle_pickup(i, rewards, fwd_pos, fwd_cell)
+                # else:
+                rewards[i]+= 200
+                done_agents[i] = True
+                print("\t\t\t Reached Goal")
             else:
-                rewards[i]+= -np.linalg.norm(self.agents[i].target_pos-self.agents[i].pos) * 3
+                rewards[i]+= (-np.linalg.norm(self.agents[i].target_pos-self.agents[i].pos) * 10) + 100
         
         if all(done_agents):
             done = True
@@ -1455,6 +1455,7 @@ class MultiGridEnv(gym.Env):
 
         rewards = rewards.tolist()
         rewards = sum(rewards)
+        print(rewards)
         
         return obs, rewards, done, {}
 
