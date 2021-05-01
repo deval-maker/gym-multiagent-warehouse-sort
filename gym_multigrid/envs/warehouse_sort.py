@@ -1,4 +1,5 @@
 from gym_multigrid.multigrid import *
+from gym_multigrid.register import register
 
 class WarehouseSortEnv(MultiGridEnv):
     """
@@ -8,7 +9,7 @@ class WarehouseSortEnv(MultiGridEnv):
     def __init__(
         self,
         size=10,
-        view_size=3,
+        view_size=7,
         width=None,
         height=None,
         goal_pst = [],
@@ -27,7 +28,7 @@ class WarehouseSortEnv(MultiGridEnv):
         self.balls_pst = balls_pst
         self.zero_sum = zero_sum
 
-        self.world = World
+        self.world = WarehouseWorld
 
         agents = []
         for i in agents_index:
@@ -37,9 +38,9 @@ class WarehouseSortEnv(MultiGridEnv):
             grid_size=size,
             width=width,
             height=height,
-            max_steps= 250,
+            max_steps= 300,
             actions_set=WarehouseActions,
-            partial_obs=False,
+            partial_obs=True,
             # Set this to True for maximum speed
             see_through_walls=True,
             agents=agents,
@@ -69,73 +70,66 @@ class WarehouseSortEnv(MultiGridEnv):
         for a in self.agents:
             self.place_agent(a)
 
-    def _reward(self, i, rewards, fwd_cell, package, is_pickup=False):
-        """ 
-        Reward for the warehouse_sort. DO NOT CHANGE ORDER OF `if` statements.
-        """
+    # def _reward(self, i, rewards, fwd_cell, package, is_pickup=False):
+    #     """ 
+    #     Reward for the warehouse_sort. DO NOT CHANGE ORDER OF `if` statements.
+    #     """
 
-        # Package picked up
-        if is_pickup:
-            rewards[i]+=100
-            return
+    #     # Package picked up
+    #     if is_pickup:
+    #         rewards[i]+=100
+    #         return
 
-        # Package dropped correctly
-        if fwd_cell.index == package.index:
-            rewards[i]+=250
-            print("Good Job !!")
-            return
+    #     # Package dropped correctly
+    #     if fwd_cell.index == package.index:
+    #         rewards[i]+=250
+    #         print("Good Job !!")
+    #         return
 
-        # Package dropped at a wrong chute 
-        if fwd_cell.index != package.index:
-            rewards[i]+=-20
-            return
-            
-
+    #     # Package dropped at a wrong chute 
+    #     if fwd_cell.index != package.index:
+    #         rewards[i]+=-20
+    #         return
+    
     def _handle_pickup(self, i, rewards, fwd_pos, fwd_cell):
-        if tuple(self.agents[i].target_pos) == tuple(self.agents[i].pos):
-            induct_pos = self.agents[i].pos + np.array([-1,0])
-            induct_cell = self.grid.get(*induct_pos)
-            if induct_cell and induct_cell.type=="induct":
-                if self.agents[i].carrying is None:
-                    self.agents[i].carrying = induct_cell.give_package()
-                    self.agents[i].carrying.cur_pos = np.array([-1, -1])
-                    self._reward(i, rewards, induct_cell, self.agents[i].carrying, is_pickup=True)
-                    chute_index = self.agents[i].carrying.index
-                    self.agents[i].target_pos = self.chutes[chute_index].target_pos
-                    self.agents[i].reward_once = True
-                else:
-                    rewards[i]+=-10
+        # if tuple(self.agents[i].target_pos) == tuple(self.agents[i].pos):
+        induct_pos = self.agents[i].pos + np.array([-1,0])
+        induct_cell = self.grid.get(*induct_pos)
+        if induct_cell and induct_cell.type=="induct":
+            rewards[i]+=1
+            self.agents[i].carrying = induct_cell.give_package()
+            self.agents[i].carrying.cur_pos = np.array([-1, -1])
+            # self._reward(i, rewards, induct_cell, self.agents[i].carrying, is_pickup=True)
+            chute_index = self.agents[i].carrying.index
+            self.agents[i].target_pos = self.chutes[chute_index].target_pos
+        else:
+            assert False, "Target position set wrongly somewhere, Pickup"
 
     def _handle_drop(self, i, rewards, fwd_pos, fwd_cell):
-        done = False
+        
+        # from IPython import embed; embed()
 
-        if self.agents[i].carrying:
-            chute_pos = self.agents[i].pos + np.array([1,0])
-            chute_cell = self.grid.get(*chute_pos)
-            if chute_cell:
-                if chute_cell.type == 'chute' and chute_cell.target_type == self.agents[i].carrying.type:
-                    self._reward(i, rewards, chute_cell, self.agents[i].carrying)
-                    chute_cell.drop_package(self.agents[i].carrying)
-                    self.agents[i].carrying.cur_pos = fwd_pos
-                    self.agents[i].carrying = None
-                    self.agents[i].target_pos = None
-            else:
-                # Package dropped at a random position
-                done = True
-                rewards[i]+=-20
-                print("Dropping at non-chute position")
-                # if fwd_cell.type == 'agent' or fwd_cell.type == 'induct':
-                # self._reward(i, rewards, fwd_cell, self.agents[i].carrying)
-                self.grid.set(*fwd_pos, self.agents[i].carrying)
+        chute_pos = self.agents[i].pos + np.array([1,0])
+        chute_cell = self.grid.get(*chute_pos)
+        if chute_cell and chute_cell.type == 'chute' and chute_cell.target_type == self.agents[i].carrying.type:
+
+            if self.agents[i].carrying.index == chute_cell.index:
+                rewards[i]+=1
+                # self._reward(i, rewards, chute_cell, self.agents[i].carrying)
+                chute_cell.drop_package(self.agents[i].carrying)
                 self.agents[i].carrying.cur_pos = fwd_pos
                 self.agents[i].carrying = None
                 self.agents[i].target_pos = None
-        
-        return done
+            else:
+                pass
+
+        else:
+            assert False, "Target position set wrongly somewhere, Drop"
 
 
     def step(self, actions):
         obs, rewards, done, info = MultiGridEnv.step(self, actions)
+        obs = obs.squeeze()
         return obs, rewards, done, info
 
 
@@ -146,8 +140,14 @@ class WarehouseSortEnvN1(WarehouseSortEnv):
         height=7,
         width=w,
         goal_pst = [[w-1,2], [w-1,4]],
-        goal_index = [0,1],
-        agents_index = [0],
+        goal_index = [1,2],
+        agents_index = [1],
         num_balls=1,
         balls_pst=[[0,3]],
         zero_sum=False)
+
+
+register(
+    id='MultiGrid-WarehouseSort-v0',
+    entry_point='gym_multigrid.envs:WarehouseSortEnvN1'
+)

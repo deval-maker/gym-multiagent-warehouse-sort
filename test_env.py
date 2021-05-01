@@ -1,16 +1,11 @@
 import gym
 import time
-from gym.envs.registration import register
+import gym_multigrid
 import numpy as np
 
 def main():
 
-    register(
-        id='warehouse-sort-v0', 
-        entry_point='gym_multigrid.envs:WarehouseSortEnvN1'
-    )
-    
-    env = gym.make('warehouse-sort-v0')
+    env = gym.make('MultiGrid-WarehouseSort-v0')
 
     obs = env.reset()
 
@@ -19,6 +14,9 @@ def main():
     debug = False
     if debug:
         mode = 'human'
+        print("Action Space:" , env.action_space)
+        print("Observation Space:" , env.observation_space)
+
     else:
         mode = 'rgb-array'
 
@@ -30,7 +28,7 @@ def main():
         if debug:
             time.sleep(0.01)
             print(env)
-            print("Observations:", obs)
+            print("Observations:", obs.shape)
 
             ac = input('cmd >')
             ac = [int(ac)]

@@ -14,12 +14,13 @@ TILE_PIXELS = 32
 
 # Map of color names to RGB values
 COLORS = {
+    'black': np.array([255, 255, 255]),
     'red': np.array([255, 0, 0]),
     'green': np.array([0, 255, 0]),
     'blue': np.array([0, 0, 255]),
     'purple': np.array([112, 39, 195]),
     'yellow': np.array([255, 255, 0]),
-    'grey': np.array([100, 100, 100])
+    'grey': np.array([100, 100, 100]),
 }
 
 COLOR_NAMES = sorted(list(COLORS.keys()))
@@ -32,12 +33,13 @@ class World:
 
     # Used to map colors to integers
     COLOR_TO_IDX = {
-        'red': 0,
-        'green': 1,
-        'blue': 2,
-        'purple': 3,
-        'yellow': 4,
-        'grey': 5
+        'black': 0,
+        'red': 1,
+        'green': 2,
+        'blue': 3,
+        'purple': 4,
+        'yellow': 5,
+        'grey': 6
     }
 
     IDX_TO_COLOR = dict(zip(COLOR_TO_IDX.values(), COLOR_TO_IDX.keys()))
@@ -62,6 +64,36 @@ class World:
     }
     IDX_TO_OBJECT = dict(zip(OBJECT_TO_IDX.values(), OBJECT_TO_IDX.keys()))
 
+class WarehouseWorld:
+
+    encode_dim = 6
+
+    normalize_obs = 1
+
+    # Used to map colors to integers
+    COLOR_TO_IDX = {
+        'black': 0,
+        'red': 1,
+        'green': 2,
+        'blue': 3,
+        'purple': 4,
+        'yellow': 5,
+        'grey': 6
+    }
+
+    IDX_TO_COLOR = dict(zip(COLOR_TO_IDX.values(), COLOR_TO_IDX.keys()))
+
+    # Map of object type to integers
+    OBJECT_TO_IDX = {
+        'unseen': 0,
+        'empty': 1,
+        'wall': 2,
+        'ball': 3,
+        'agent': 4,
+        'induct': 5,
+        'chute': 6,
+    }
+    IDX_TO_OBJECT = dict(zip(OBJECT_TO_IDX.values(), OBJECT_TO_IDX.keys()))
 
 class SmallWorld:
 
@@ -268,14 +300,16 @@ class Induct(WorldObj):
         self.package = None
         self.world = world
         self.n_packages = n_packages
+        self.color = color
         self.generate_package()
         
     def can_pickup(self):
         return True
         
     def render(self, img):
-        fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS["yellow"])
-        fill_coords(img, point_in_circle(0.5, 0.5, 0.31), COLORS[self.color])
+        fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
+        c = self.package.color if self.package else self.color
+        fill_coords(img, point_in_circle(0.5, 0.5, 0.31), COLORS[c])
     
     def give_package(self):
         old_package = self.package
@@ -287,16 +321,19 @@ class Induct(WorldObj):
         if self.package is None:
             index = random.randrange(self.n_packages)
             # print("Generating New Package: ", index)
-            self.package = Ball(self.world, index)
-            self.color = self.package.color
+            self.package = Ball(self.world, index+1)
+            # self.color = self.package.color
     
     def encode(self, world, current_agent=False):
         """Encode the a description of this object as a 3-tuple of integers"""
-        package_id = self.package.index if self.package else -1
         if world.encode_dim==3:
-            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], package_id)
+            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0)
         else:
-            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], package_id, 0, 0, 0)
+            if self.package:
+                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], \
+                        world.OBJECT_TO_IDX[self.package.type], world.COLOR_TO_IDX[self.package.color], 0, 0)
+            else:
+                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, 0, 0)
 
     @property
     def target_pos(self):
@@ -323,11 +360,11 @@ class Chute(WorldObj):
 
     def encode(self, world, current_agent=False):
         """Encode the a description of this object as a 3-tuple of integers"""
-        last_package_id = self.last_package.index if self.last_package else -1
+        # last_package_id = self.last_package.index if self.last_package else -1
         if world.encode_dim==3:
-            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], last_package_id)
+            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0)
         else:
-            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], last_package_id, 0, 0, 0)
+            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, 0, 0)
 
     @property
     def target_pos(self):
@@ -470,7 +507,7 @@ class Agent(WorldObj):
         self.started = True
         self.paused = False
         self.target_pos = None
-        self.reward_once = True
+        # self.reward_once = True
     
     def reset(self):
         self.carrying = None
@@ -478,7 +515,7 @@ class Agent(WorldObj):
         self.started = True
         self.paused = False
         self.target_pos = None
-        self.reward_once = True
+        # self.reward_once = True
 
     def render(self, img):
         c = COLORS[self.color]
@@ -495,6 +532,8 @@ class Agent(WorldObj):
 
     def encode(self, world, current_agent=False):
         """Encode the a description of this object as a 3-tuple of integers"""
+        
+
         if world.encode_dim==3:
             return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], self.dir)
         elif self.carrying:
@@ -503,13 +542,18 @@ class Agent(WorldObj):
                         world.COLOR_TO_IDX[self.carrying.color], self.dir, 1)
             else:
                 return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], world.OBJECT_TO_IDX[self.carrying.type],
-                        world.COLOR_TO_IDX[self.carrying.color], self.dir, 0)
+                        world.COLOR_TO_IDX[self.carrying.color], self.dir, 2)
 
         else:
             if current_agent:
                 return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, self.dir, 1)
             else:
-                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, self.dir, 0)
+                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, self.dir, 2)
+
+        # [ Agent's (self) type, Agent's (self) color, 
+        #   Agent-carrying type, Agent-carrying color,
+        #   direction, if_current_agent, other agents' past_action 
+        # ]
 
     @property
     def dir_vec(self):
@@ -944,7 +988,7 @@ class Actions:
     done = 7
 
 class WarehouseActions:
-    available=['still', 'left', 'right', 'forward', 'pickup', 'drop']
+    available=['still', 'left', 'right', 'forward']
 
     still = 0
 
@@ -1008,6 +1052,7 @@ class MultiGridEnv(gym.Env):
             objects_set = World
     ):
         self.agents = agents
+        self.n_agents = len(agents)
 
         # Does the agents have partial or full observation?
         self.partial_obs = partial_obs
@@ -1029,7 +1074,8 @@ class MultiGridEnv(gym.Env):
         if partial_obs:
             self.observation_space = spaces.Box(
                 low=0,
-                high=255,
+                high=10,
+                # shape=(self.n_agents, agent_view_size, agent_view_size, self.objects.encode_dim),
                 shape=(agent_view_size, agent_view_size, self.objects.encode_dim),
                 dtype='uint8'
             )
@@ -1046,7 +1092,7 @@ class MultiGridEnv(gym.Env):
         self.ac_dim = self.action_space.n
 
         # Range of possible rewards
-        self.reward_range = (-100, 200)
+        self.reward_range = (-1, 1)
 
         # Window to use for human rendering mode
         self.window = None
@@ -1086,18 +1132,19 @@ class MultiGridEnv(gym.Env):
         self.step_count = 0
 
         # # Return first observation
-        # if self.partial_obs:
-        #     obs = self.gen_obs()
-        # else:
-        #     obs = [self.grid.encode_for_agents(self.objects, self.agents[i].pos) for i in range(len(self.agents))]
-        # obs=[self.objects.normalize_obs*ob for ob in obs]
+        if self.partial_obs:
+            obs = self.gen_obs()
+        else:
+            obs = [self.grid.encode_for_agents(self.objects, self.agents[i].pos) for i in range(len(self.agents))]
+        obs=[self.objects.normalize_obs*ob for ob in obs]
         
-        # Scheduling 
-        self.schedule()
+        # # Scheduling 
+        # self.schedule()
 
-        obs = [np.hstack([a.current_pose, a.target_pos]) for a in self.agents]
+        # obs = [np.hstack([a.current_pose, a.target_pos]) for a in self.agents]
+        
         obs = np.array(obs)
-                
+        
         return obs
 
     def seed(self, seed=1337):
@@ -1383,13 +1430,14 @@ class MultiGridEnv(gym.Env):
 
         for i in order:
             
-            if self.agents[i].carrying:
-                rewards[i]+= -np.linalg.norm(self.agents[i].target_pos-self.agents[i].pos)/5 - 0.2
-                # rewards[i]+= 10*np.exp()
-            else:
-                rewards[i]+= -np.linalg.norm(self.agents[i].target_pos-self.agents[i].pos)/2 - 0.5
+            # if self.agents[i].carrying:
+            #     rewards[i]+= -np.linalg.norm(self.agents[i].target_pos-self.agents[i].pos)/5 - 0.2
+            #     # rewards[i]+= 10*np.exp()
+            # else:
+            #     rewards[i]+= -np.linalg.norm(self.agents[i].target_pos-self.agents[i].pos)/2 - 0.5
 
-            if self.agents[i].terminated or self.agents[i].paused or not self.agents[i].started or actions[i] == self.actions.still:
+            #  or actions[i] == self.actions.still
+            if self.agents[i].terminated or self.agents[i].paused or not self.agents[i].started: 
                 continue
 
             # Get the position in front of the agent
@@ -1403,8 +1451,11 @@ class MultiGridEnv(gym.Env):
             #     actions[i] == self.actions.still or \
             #     actions[i] == self.actions.forward:
 
+            if actions[i] == self.actions.still:
+                pass
+            
             # Rotate left
-            if actions[i] == self.actions.left:
+            elif actions[i] == self.actions.left:
                 self.agents[i].dir = (self.agents[i].dir - 1 + 4) % 4
 
             # Rotate right
@@ -1415,64 +1466,80 @@ class MultiGridEnv(gym.Env):
             elif actions[i] == self.actions.forward:
                 if fwd_cell is not None:
                     if fwd_cell.type == 'agent':
-                        rewards[i]+= -50
+                        rewards[i]+= -1
                 elif fwd_cell is None or fwd_cell.can_overlap():
                     self.grid.set(*fwd_pos, self.agents[i])
                     self.grid.set(*self.agents[i].pos, None)
                     self.agents[i].pos = fwd_pos
                 self._handle_special_moves(i, rewards, fwd_pos, fwd_cell)
 
-            elif 'build' in self.actions.available and actions[i]==self.actions.build:
-                self._handle_build(i, rewards, fwd_pos, fwd_cell)
+            # elif 'build' in self.actions.available and actions[i]==self.actions.build:
+            #     self._handle_build(i, rewards, fwd_pos, fwd_cell)
 
-            # Pick up an object
-            elif actions[i] == self.actions.pickup:
-                self._handle_pickup(i, rewards, fwd_pos, fwd_cell)
+            # # Pick up an object
+            # elif actions[i] == self.actions.pickup:
+            #     self._handle_pickup(i, rewards, fwd_pos, fwd_cell)
 
-            # Drop an object
-            elif actions[i] == self.actions.drop:
-                done_agent = self._handle_drop(i, rewards, fwd_pos, fwd_cell)
-                done_agents[i] = done_agent
+            # # Drop an object
+            # elif actions[i] == self.actions.drop:
+            #     done_agent = self._handle_drop(i, rewards, fwd_pos, fwd_cell)
+            #     done_agents[i] = done_agent
 
-            # Toggle/activate an object
-            elif actions[i] == self.actions.toggle:
-                if fwd_cell:
-                    fwd_cell.toggle(self, fwd_pos)
+            # # Toggle/activate an object
+            # elif actions[i] == self.actions.toggle:
+            #     if fwd_cell:
+            #         fwd_cell.toggle(self, fwd_pos)
 
-            # Done action (not used by default)
-            elif actions[i] == self.actions.done:
-                pass
+            # # Done action (not used by default)
+            # elif actions[i] == self.actions.done:
+            #     pass
 
             else:
-                assert False, "unknown action"
+                assert False, f"unknown action, {actions[i]}"
 
-            if self.agents[i].reward_once and np.all(self.agents[i].target_pos == self.agents[i].pos):
-                rewards[i]+=10
-                self.agents[i].reward_once = False
+            # if np.all(self.agents[i].target_pos == self.agents[i].pos): #self.agents[i].reward_once and
+            #     rewards[i]+=10
+                # self.agents[i].reward_once = False
         
+            # if tuple(self.agents[i].target_pos) == tuple(self.agents[i].pos):
+            
+            for chute in self.chutes:
+                if tuple(chute.target_pos) == tuple(self.agents[i].pos):
+                    if  self.agents[i].carrying:
+                        self._handle_drop(i, rewards, fwd_pos, fwd_cell)
+            
+            for induct in self.inducts:
+                if tuple(induct.target_pos) == tuple(self.agents[i].pos):
+                    if  not self.agents[i].carrying:
+                        self._handle_pickup(i, rewards, fwd_pos, fwd_cell)
+            
+            # else:
+                # rewards[i]+= -np.linalg.norm(self.agents[i].target_pos-self.agents[i].pos)
+
         if any(done_agents):
             done = True
 
         if self.step_count >= self.max_steps:
             done = True
 
-        # if self.partial_obs:
-        #     obs = self.gen_obs()
-        # else:
-        #     obs = [self.grid.encode_for_agents(self.objects, self.agents[i].pos) for i in range(len(actions))]
-
-        # obs=[self.objects.normalize_obs*ob for ob in obs]
+        if self.partial_obs:
+            obs = self.gen_obs()
+        else:
+            obs = [self.grid.encode_for_agents(self.objects, self.agents[i].pos) for i in range(len(actions))]
+        obs=[self.objects.normalize_obs*ob for ob in obs]
         
-        # Scheduling 
-        self.schedule()
+        # # Scheduling 
+        # self.schedule()
         
-        obs = [np.hstack([a.current_pose, a.target_pos]) for a in self.agents]
-        obs = np.array(obs)
+        # obs = [np.hstack([a.current_pose, a.target_pos]) for a in self.agents]
+        # obs = np.array(obs)
 
         rewards = rewards.tolist()
         rewards = sum(rewards)
-        print(rewards)
+        # print(rewards)
 
+        obs = np.array(obs)
+        
         return obs, rewards, done, {}
 
     def schedule(self):
@@ -1482,7 +1549,7 @@ class MultiGridEnv(gym.Env):
                 # Random Scheduling
                 induct_id = random.randrange(len(self.inducts))
                 agent.target_pos = self.inducts[induct_id].target_pos
-                agent.reward_once = True
+                # agent.reward_once = True
     
 
     def gen_obs_grid(self):
