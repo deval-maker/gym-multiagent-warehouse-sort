@@ -129,7 +129,6 @@ class WarehouseSortEnv(MultiGridEnv):
 
     def step(self, actions):
         obs, rewards, done, info = MultiGridEnv.step(self, actions)
-        obs = obs.squeeze()
         return obs, rewards, done, info
 
 
@@ -150,4 +149,23 @@ class WarehouseSortEnvN1(WarehouseSortEnv):
 register(
     id='MultiGrid-WarehouseSort-v0',
     entry_point='gym_multigrid.envs:WarehouseSortEnvN1'
+)
+
+class WarehouseSortEnvN2(WarehouseSortEnv):
+    def __init__(self):
+        w = 5
+        super().__init__(size=None,
+        height=7,
+        width=w,
+        goal_pst = [[w-1,2], [w-1,4]],
+        goal_index = [1,2],
+        agents_index = [1, 2],
+        num_balls=1,
+        balls_pst=[[0,3]],
+        zero_sum=False)
+
+
+register(
+    id='MultiGrid-WarehouseSort-v1',
+    entry_point='gym_multigrid.envs:WarehouseSortEnvN2'
 )
