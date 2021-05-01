@@ -1144,6 +1144,7 @@ class MultiGridEnv(gym.Env):
         # obs = [np.hstack([a.current_pose, a.target_pos]) for a in self.agents]
         
         obs = np.array(obs)
+        obs = obs.squeeze()
         
         return obs
 
@@ -1532,7 +1533,9 @@ class MultiGridEnv(gym.Env):
         # self.schedule()
         
         # obs = [np.hstack([a.current_pose, a.target_pos]) for a in self.agents]
-        # obs = np.array(obs)
+        
+        obs = np.array(obs)
+        obs = obs.squeeze()
 
         rewards = rewards.tolist()
         rewards = sum(rewards)
