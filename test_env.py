@@ -5,13 +5,13 @@ import numpy as np
 
 def main():
 
-    env = gym.make('MultiGrid-WarehouseSort-v0')
+    env = gym.make('MultiGrid-WarehouseSort-n6-v1')
 
     obs = env.reset()
 
     n_agents = len(env.agents)
 
-    debug = False
+    debug = True
     if debug:
         mode = 'human'
         print("Action Space:" , env.action_space)

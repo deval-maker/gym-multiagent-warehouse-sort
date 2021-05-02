@@ -507,6 +507,8 @@ class Agent(WorldObj):
         self.started = True
         self.paused = False
         self.target_pos = None
+        self.steps_before_pick_put = 0
+
         # self.reward_once = True
     
     def reset(self):
@@ -515,6 +517,8 @@ class Agent(WorldObj):
         self.started = True
         self.paused = False
         self.target_pos = None
+        self.steps_before_pick_put = 0
+
         # self.reward_once = True
 
     def render(self, img):
@@ -1067,6 +1071,8 @@ class MultiGridEnv(gym.Env):
         self.actions = actions_set
 
         # Actions are discrete integer values
+        # action_space = [len(self.actions.available) for i in range(self.n_agents)]
+        # self.action_space = spaces.MultiDiscrete([*action_space])
         self.action_space = spaces.Discrete(len(self.actions.available))
 
         self.objects=objects_set
@@ -1075,8 +1081,7 @@ class MultiGridEnv(gym.Env):
             self.observation_space = spaces.Box(
                 low=0,
                 high=10,
-                # shape=(self.n_agents, agent_view_size, agent_view_size, self.objects.encode_dim),
-                shape=(agent_view_size, agent_view_size, self.objects.encode_dim),
+                shape=(self.n_agents, agent_view_size, agent_view_size, self.objects.encode_dim),
                 dtype='uint8'
             )
 
@@ -1089,7 +1094,7 @@ class MultiGridEnv(gym.Env):
             )
 
         self.ob_dim = np.prod(self.observation_space.shape)
-        self.ac_dim = self.action_space.n
+        # self.ac_dim = self.action_space.n
 
         # Range of possible rewards
         self.reward_range = (-1, 1)
@@ -1144,7 +1149,7 @@ class MultiGridEnv(gym.Env):
         # obs = [np.hstack([a.current_pose, a.target_pos]) for a in self.agents]
         
         obs = np.array(obs)
-        obs = obs.squeeze()
+        # obs = obs.squeeze()
         
         return obs
 
@@ -1423,8 +1428,7 @@ class MultiGridEnv(gym.Env):
 
         self.step_count += 1
 
-        order = np.random.permutation(len(actions))
-
+        order = np.arange(len(actions))
         rewards = np.zeros(len(actions))
         done = False
         done_agents = [False for _ in range(len(self.agents))]
@@ -1441,6 +1445,9 @@ class MultiGridEnv(gym.Env):
             if self.agents[i].terminated or self.agents[i].paused or not self.agents[i].started: 
                 continue
 
+            self.agents[i].steps_before_pick_put += 1
+            rewards[i]+=-0.08
+
             # Get the position in front of the agent
             fwd_pos = self.agents[i].front_pos
 
@@ -1453,21 +1460,23 @@ class MultiGridEnv(gym.Env):
             #     actions[i] == self.actions.forward:
 
             if actions[i] == self.actions.still:
-                pass
+                rewards[i]+=-0.15
             
             # Rotate left
             elif actions[i] == self.actions.left:
                 self.agents[i].dir = (self.agents[i].dir - 1 + 4) % 4
+                rewards[i]+=-0.1
 
             # Rotate right
             elif actions[i] == self.actions.right:
                 self.agents[i].dir = (self.agents[i].dir + 1) % 4
+                rewards[i]+=-0.1
 
             # Move forward
             elif actions[i] == self.actions.forward:
                 if fwd_cell is not None:
                     if fwd_cell.type == 'agent':
-                        rewards[i]+= -1
+                        rewards[i]+= -0.2
                 elif fwd_cell is None or fwd_cell.can_overlap():
                     self.grid.set(*fwd_pos, self.agents[i])
                     self.grid.set(*self.agents[i].pos, None)
@@ -1535,10 +1544,10 @@ class MultiGridEnv(gym.Env):
         # obs = [np.hstack([a.current_pose, a.target_pos]) for a in self.agents]
         
         obs = np.array(obs)
-        obs = obs.squeeze()
+        # obs = obs.squeeze()
 
         rewards = rewards.tolist()
-        rewards = sum(rewards)
+        # rewards = sum(rewards)
         # print(rewards)
 
         obs = np.array(obs)

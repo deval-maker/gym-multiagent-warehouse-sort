@@ -96,19 +96,21 @@ class WarehouseSortEnv(MultiGridEnv):
         induct_pos = self.agents[i].pos + np.array([-1,0])
         induct_cell = self.grid.get(*induct_pos)
         if induct_cell and induct_cell.type=="induct":
+            # (1 - 0.9 * (self.agents[i].steps_before_pick_put / self.max_steps))
             rewards[i]+=1
             self.agents[i].carrying = induct_cell.give_package()
             self.agents[i].carrying.cur_pos = np.array([-1, -1])
             # self._reward(i, rewards, induct_cell, self.agents[i].carrying, is_pickup=True)
             chute_index = self.agents[i].carrying.index
             self.agents[i].target_pos = self.chutes[chute_index].target_pos
+
+            self.agents[i].steps_before_pick_put = 0
+
         else:
             assert False, "Target position set wrongly somewhere, Pickup"
 
     def _handle_drop(self, i, rewards, fwd_pos, fwd_cell):
         
-        # from IPython import embed; embed()
-
         chute_pos = self.agents[i].pos + np.array([1,0])
         chute_cell = self.grid.get(*chute_pos)
         if chute_cell and chute_cell.type == 'chute' and chute_cell.target_type == self.agents[i].carrying.type:
@@ -121,7 +123,9 @@ class WarehouseSortEnv(MultiGridEnv):
                 self.agents[i].carrying = None
                 self.agents[i].target_pos = None
             else:
-                pass
+                rewards[i]+=-0.1
+            
+            self.agents[i].steps_before_pick_put = 0
 
         else:
             assert False, "Target position set wrongly somewhere, Drop"
@@ -132,40 +136,3 @@ class WarehouseSortEnv(MultiGridEnv):
         return obs, rewards, done, info
 
 
-class WarehouseSortEnvN1(WarehouseSortEnv):
-    def __init__(self):
-        w = 5
-        super().__init__(size=None,
-        height=7,
-        width=w,
-        goal_pst = [[w-1,2], [w-1,4]],
-        goal_index = [1,2],
-        agents_index = [1],
-        num_balls=1,
-        balls_pst=[[0,3]],
-        zero_sum=False)
-
-
-register(
-    id='MultiGrid-WarehouseSort-v0',
-    entry_point='gym_multigrid.envs:WarehouseSortEnvN1'
-)
-
-class WarehouseSortEnvN2(WarehouseSortEnv):
-    def __init__(self):
-        w = 5
-        super().__init__(size=None,
-        height=7,
-        width=w,
-        goal_pst = [[w-1,2], [w-1,4]],
-        goal_index = [1,2],
-        agents_index = [1, 2],
-        num_balls=1,
-        balls_pst=[[0,3]],
-        zero_sum=False)
-
-
-register(
-    id='MultiGrid-WarehouseSort-v1',
-    entry_point='gym_multigrid.envs:WarehouseSortEnvN2'
-)
