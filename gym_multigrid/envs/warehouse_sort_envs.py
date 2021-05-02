@@ -17,16 +17,17 @@ class WarehouseSortEnvV0(WarehouseSortEnv):
 
 class WarehouseSortEnvV1(WarehouseSortEnv):
     def __init__(self):
-        w = 5
+        w = 8
+        h = 8
         n_agents = 1
         super().__init__(size=None,
-        height=7,
+        height=h,
         width=w,
-        goal_pst = [[w-1,2], [w-1,4]],
+        goal_pst = [[w-1,2], [w-1,h-3]],
         goal_index = [1,2],
         agents_index = [i+1 for i in range(n_agents)],
-        num_balls=1,
-        balls_pst=[[0,3]],
+        num_balls=2,
+        balls_pst=[[0,2], [0,5]],
         zero_sum=False)
 
 ######
@@ -114,93 +115,93 @@ class WarehouseSortEnvN6V0(WarehouseSortEnv):
 
 class WarehouseSortEnvN1V1(WarehouseSortEnv):
     def __init__(self):
-        w = 11
-        h = 11
+        w = 8
+        h = 8
         n_agents = 1
         super().__init__(size=None,
         height=h,
         width=w,
-        goal_pst = [[w-1,3], [w-1,h-4]],
+        goal_pst = [[w-1,2], [w-1,h-3]],
         goal_index = [1,2],
         agents_index = [i+1 for i in range(n_agents)],
         num_balls=2,
-        balls_pst=[[0,3], [0,7]],
+        balls_pst=[[0,2], [0,5]],
         zero_sum=False)
 
 
 class WarehouseSortEnvN2V1(WarehouseSortEnv):
     def __init__(self):
-        w = 11
-        h = 11
+        w = 8
+        h = 8
         n_agents = 2
         super().__init__(size=None,
         height=h,
         width=w,
-        goal_pst = [[w-1,3], [w-1,h-4]],
+        goal_pst = [[w-1,2], [w-1,h-3]],
         goal_index = [1,2],
         agents_index = [i+1 for i in range(n_agents)],
         num_balls=2,
-        balls_pst=[[0,3], [0,7]],
+        balls_pst=[[0,2], [0,5]],
         zero_sum=False)
 
 class WarehouseSortEnvN3V1(WarehouseSortEnv):
     def __init__(self):
-        w = 11
-        h = 11
+        w = 8
+        h = 8
         n_agents = 3
         super().__init__(size=None,
         height=h,
         width=w,
-        goal_pst = [[w-1,3], [w-1,h-4]],
+        goal_pst = [[w-1,2], [w-1,h-3]],
         goal_index = [1,2],
         agents_index = [i+1 for i in range(n_agents)],
         num_balls=2,
-        balls_pst=[[0,3], [0,7]],
+        balls_pst=[[0,2], [0,5]],
         zero_sum=False)
 
 class WarehouseSortEnvN4V1(WarehouseSortEnv):
     def __init__(self):
-        w = 11
-        h = 11
+        w = 8
+        h = 8
         n_agents = 4
         super().__init__(size=None,
         height=h,
         width=w,
-        goal_pst = [[w-1,3], [w-1,h-4]],
+        goal_pst = [[w-1,2], [w-1,h-3]],
         goal_index = [1,2],
         agents_index = [i+1 for i in range(n_agents)],
         num_balls=2,
-        balls_pst=[[0,3], [0,7]],
+        balls_pst=[[0,2], [0,5]],
         zero_sum=False)
 
 class WarehouseSortEnvN5V1(WarehouseSortEnv):
     def __init__(self):
-        w = 11
-        h = 11
+        w = 8
+        h = 8
         n_agents = 5
         super().__init__(size=None,
         height=h,
         width=w,
-        goal_pst = [[w-1,3], [w-1,h-4]],
+        goal_pst = [[w-1,2], [w-1,h-3]],
         goal_index = [1,2],
         agents_index = [i+1 for i in range(n_agents)],
         num_balls=2,
-        balls_pst=[[0,3], [0,7]],
+        balls_pst=[[0,2], [0,5]],
         zero_sum=False)
 
 class WarehouseSortEnvN6V1(WarehouseSortEnv):
     def __init__(self):
-        w = 11
-        h = 11
+        w = 8
+        h = 8
         n_agents = 6
         super().__init__(size=None,
         height=h,
         width=w,
-        goal_pst = [[w-1,3], [w-1,h-4]],
+        goal_pst = [[w-1,2], [w-1,h-3]],
         goal_index = [1,2],
         agents_index = [i+1 for i in range(n_agents)],
         num_balls=2,
-        balls_pst=[[0,3], [0,7]],
+        balls_pst=[[0,2], [0,5]],
         zero_sum=False)
 
 # v0s
