@@ -18,9 +18,11 @@ COLORS = {
     'red': np.array([255, 0, 0]),
     'green': np.array([0, 255, 0]),
     'blue': np.array([0, 0, 255]),
-    'purple': np.array([112, 39, 195]),
     'yellow': np.array([255, 255, 0]),
-    'grey': np.array([100, 100, 100]),
+    'cyan': np.array([0, 255, 255]),
+    'magenta': np.array([255, 0, 255]),
+    'orange': np.array([255, 125, 0]),
+    'grey': np.array([125, 125, 125]),
 }
 
 COLOR_NAMES = sorted(list(COLORS.keys()))
@@ -37,9 +39,11 @@ class World:
         'red': 1,
         'green': 2,
         'blue': 3,
-        'purple': 4,
-        'yellow': 5,
-        'grey': 6
+        'yellow': 4,
+        'cyan': 5,
+        'magenta': 6,
+        'orange': 7,
+        'grey': 8,
     }
 
     IDX_TO_COLOR = dict(zip(COLOR_TO_IDX.values(), COLOR_TO_IDX.keys()))
@@ -75,10 +79,12 @@ class WarehouseWorld:
         'black': 0,
         'red': 1,
         'green': 2,
-        'blue': 3,
-        'purple': 4,
-        'yellow': 5,
-        'grey': 6
+        'yellow': 3,
+        'orange': 4,
+        'magenta': 5,
+        'cyan': 6,
+        'blue': 7,
+        'grey': 8,
     }
 
     IDX_TO_COLOR = dict(zip(COLOR_TO_IDX.values(), COLOR_TO_IDX.keys()))
@@ -295,7 +301,7 @@ class Wall(WorldObj):
         fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
 
 class Induct(WorldObj):
-    def __init__(self, world, color='yellow', n_packages=1):
+    def __init__(self, world, color='cyan', n_packages=1):
         super().__init__(world, 'induct', color)
         self.package = None
         self.world = world
@@ -308,21 +314,19 @@ class Induct(WorldObj):
         
     def render(self, img):
         fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
-        c = self.package.color if self.package else self.color
+        c = self.package.color if self.package is not None else self.color
         fill_coords(img, point_in_circle(0.5, 0.5, 0.31), COLORS[c])
     
     def give_package(self):
-        old_package = self.package
-        self.package = None
-        self.generate_package()
-        return old_package
-
+        if self.package:
+            old_package = self.package
+            del self.package
+            self.generate_package()
+            return old_package
+    
     def generate_package(self):
-        if self.package is None:
-            index = random.randrange(self.n_packages)
-            # print("Generating New Package: ", index)
-            self.package = Ball(self.world, index+1)
-            # self.color = self.package.color
+        index = random.randrange(self.n_packages)+1
+        self.package = Ball(self.world, index)
     
     def encode(self, world, current_agent=False):
         """Encode the a description of this object as a 3-tuple of integers"""
@@ -334,10 +338,16 @@ class Induct(WorldObj):
                         world.OBJECT_TO_IDX[self.package.type], world.COLOR_TO_IDX[self.package.color], 0, 0)
             else:
                 return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, 0, 0)
-
-    @property
-    def target_pos(self):
-        return np.array([self.cur_pos[0]+1, self.cur_pos[1]])
+    
+    def get_target_poses(self, grid):
+        self.target_pos = []
+        cur_pos = np.array(self.cur_pos)
+        for dir in DIR_TO_VEC:
+            try:
+                if not grid.get(*(cur_pos+dir)):
+                    self.target_pos.append(cur_pos+dir)
+            except:
+                pass
         
 class Chute(WorldObj):
     def __init__(self, world, index, target_type='ball', reward=1, color=None):
@@ -356,6 +366,7 @@ class Chute(WorldObj):
             fill_coords(img, point_in_circle(0.5, 0.5, 0.31), COLORS[self.last_package.color])
     
     def drop_package(self, package):
+        del self.last_package
         self.last_package = package
 
     def encode(self, world, current_agent=False):
@@ -366,9 +377,15 @@ class Chute(WorldObj):
         else:
             return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, 0, 0)
 
-    @property
-    def target_pos(self):
-        return np.array([self.cur_pos[0]-1, self.cur_pos[1]])
+    def get_target_poses(self, grid):
+        self.target_pos = []
+        cur_pos = np.array(self.cur_pos)
+        for dir in DIR_TO_VEC:
+            try:
+                if not grid.get(*(cur_pos+dir)):
+                    self.target_pos.append(cur_pos+dir)
+            except:
+                pass
 
 class Door(WorldObj):
     def __init__(self, world, color, is_open=False, is_locked=False):
@@ -496,7 +513,7 @@ class Box(WorldObj):
 
 
 class Agent(WorldObj):
-    def __init__(self, world, index=3, view_size=7):
+    def __init__(self, world, index=7, view_size=7):
         super(Agent, self).__init__(world, 'agent', world.IDX_TO_COLOR[index])
         self.pos = None
         self.dir = None
@@ -1053,7 +1070,7 @@ class MultiGridEnv(gym.Env):
             partial_obs=True,
             agent_view_size=7,
             actions_set=Actions,
-            objects_set = World
+            objects_set = WarehouseWorld
     ):
         self.agents = agents
         self.n_agents = len(agents)
@@ -1101,9 +1118,6 @@ class MultiGridEnv(gym.Env):
 
         # Window to use for human rendering mode
         self.window = None
-
-        self.chutes = []
-        self.inducts = []
 
         # Environment configuration
         self.width = width
@@ -1446,7 +1460,7 @@ class MultiGridEnv(gym.Env):
                 continue
 
             self.agents[i].steps_before_pick_put += 1
-            rewards[i]+=-0.08
+            rewards[i]+=-0.02
 
             # Get the position in front of the agent
             fwd_pos = self.agents[i].front_pos
@@ -1460,23 +1474,23 @@ class MultiGridEnv(gym.Env):
             #     actions[i] == self.actions.forward:
 
             if actions[i] == self.actions.still:
-                rewards[i]+=-0.15
+                rewards[i]+=-0.07
             
             # Rotate left
             elif actions[i] == self.actions.left:
                 self.agents[i].dir = (self.agents[i].dir - 1 + 4) % 4
-                rewards[i]+=-0.1
+                rewards[i]+=-0.05
 
             # Rotate right
             elif actions[i] == self.actions.right:
                 self.agents[i].dir = (self.agents[i].dir + 1) % 4
-                rewards[i]+=-0.1
+                rewards[i]+=-0.05
 
             # Move forward
             elif actions[i] == self.actions.forward:
                 if fwd_cell is not None:
                     if fwd_cell.type == 'agent':
-                        rewards[i]+= -0.2
+                        rewards[i]+= -0.05
                 elif fwd_cell is None or fwd_cell.can_overlap():
                     self.grid.set(*fwd_pos, self.agents[i])
                     self.grid.set(*self.agents[i].pos, None)
@@ -1514,15 +1528,21 @@ class MultiGridEnv(gym.Env):
             # if tuple(self.agents[i].target_pos) == tuple(self.agents[i].pos):
             
             for chute in self.chutes:
-                if tuple(chute.target_pos) == tuple(self.agents[i].pos):
-                    if  self.agents[i].carrying:
-                        self._handle_drop(i, rewards, fwd_pos, fwd_cell)
+                for target_pos in chute.target_pos:
+                    if tuple(target_pos) == tuple(self.agents[i].pos):
+                        if self.agents[i].carrying:
+                            self._handle_drop(i, rewards, chute, fwd_cell)
+                        else:
+                            rewards[i]+= -0.02
             
             for induct in self.inducts:
-                if tuple(induct.target_pos) == tuple(self.agents[i].pos):
-                    if  not self.agents[i].carrying:
-                        self._handle_pickup(i, rewards, fwd_pos, fwd_cell)
-            
+                for target_pos in induct.target_pos:
+                    if tuple(target_pos) == tuple(self.agents[i].pos):
+                        if  not self.agents[i].carrying:
+                            self._handle_pickup(i, rewards, induct, fwd_cell)
+                        else:
+                            rewards[i]+= -0.02
+
             # else:
                 # rewards[i]+= -np.linalg.norm(self.agents[i].target_pos-self.agents[i].pos)
 
@@ -1554,13 +1574,13 @@ class MultiGridEnv(gym.Env):
         
         return obs, rewards, done, {}
 
-    def schedule(self):
+    # def schedule(self):
         
-        for agent in self.agents:
-            if agent.target_pos is None:
-                # Random Scheduling
-                induct_id = random.randrange(len(self.inducts))
-                agent.target_pos = self.inducts[induct_id].target_pos
+    #     for agent in self.agents:
+    #         if agent.target_pos is None:
+    #             # Random Scheduling
+    #             induct_id = random.randrange(len(self.inducts))
+    #             agent.target_pos = self.inducts[induct_id].target_pos
                 # agent.reward_once = True
     
 
