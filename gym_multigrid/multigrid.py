@@ -70,7 +70,7 @@ class World:
 
 class WarehouseWorld:
 
-    encode_dim = 6
+    encode_dim = 7
 
     normalize_obs = 1
 
@@ -189,7 +189,7 @@ class WorldObj:
         if world.encode_dim==3:
             return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0)
         else:
-            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, 0, 0)
+            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, 0, 0, 0)
 
     @staticmethod
     def decode(type_idx, color_idx, state):
@@ -335,9 +335,9 @@ class Induct(WorldObj):
         else:
             if self.package:
                 return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], \
-                        world.OBJECT_TO_IDX[self.package.type], world.COLOR_TO_IDX[self.package.color], 0, 0)
+                        world.OBJECT_TO_IDX[self.package.type], world.COLOR_TO_IDX[self.package.color], 0, 0, 0)
             else:
-                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, 0, 0)
+                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, 0, 0, 0)
     
     def get_target_poses(self, grid):
         self.target_pos = []
@@ -373,9 +373,9 @@ class Chute(WorldObj):
         """Encode the a description of this object as a 3-tuple of integers"""
         # last_package_id = self.last_package.index if self.last_package else -1
         if world.encode_dim==3:
-            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0)
+            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0)
         else:
-            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, 0, 0)
+            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, 0, 0, 0)
 
     def get_target_poses(self, grid):
         self.target_pos = []
@@ -535,6 +535,7 @@ class Agent(WorldObj):
         self.paused = False
         self.target_pos = None
         self.steps_before_pick_put = 0
+        self.past_action = 0
 
         # self.reward_once = True
 
@@ -560,16 +561,16 @@ class Agent(WorldObj):
         elif self.carrying:
             if current_agent:
                 return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], world.OBJECT_TO_IDX[self.carrying.type],
-                        world.COLOR_TO_IDX[self.carrying.color], self.dir, 1)
+                        world.COLOR_TO_IDX[self.carrying.color], self.dir, 1, self.past_action)
             else:
                 return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], world.OBJECT_TO_IDX[self.carrying.type],
-                        world.COLOR_TO_IDX[self.carrying.color], self.dir, 2)
+                        world.COLOR_TO_IDX[self.carrying.color], self.dir, 2, self.past_action)
 
         else:
             if current_agent:
-                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, self.dir, 1)
+                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, self.dir, 1, self.past_action)
             else:
-                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, self.dir, 2)
+                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, self.dir, 2, self.past_action)
 
         # [ Agent's (self) type, Agent's (self) color, 
         #   Agent-carrying type, Agent-carrying color,
@@ -923,6 +924,7 @@ class Grid:
                             array[i, j, 3] = 0
                             array[i, j, 4] = 0
                             array[i, j, 5] = 0
+                            array[i, j, 6] = 0
 
                     else:
                         array[i, j, :] = v.encode(world, current_agent=np.array_equal(agent_pos, (i, j)))
@@ -1106,7 +1108,7 @@ class MultiGridEnv(gym.Env):
             self.observation_space = spaces.Box(
                 low=0,
                 high=max(width, height),
-                shape=(len(self.agents), 6),
+                shape=(len(self.agents), 7),
                 dtype='uint8'
             )
 
@@ -1449,6 +1451,8 @@ class MultiGridEnv(gym.Env):
 
         for i in order:
             
+            self.agents[i].past_action = actions[i]
+
             # if self.agents[i].carrying:
             #     rewards[i]+= -np.linalg.norm(self.agents[i].target_pos-self.agents[i].pos)/5 - 0.2
             #     # rewards[i]+= 10*np.exp()
