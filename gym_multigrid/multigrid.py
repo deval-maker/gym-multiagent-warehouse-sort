@@ -1097,13 +1097,23 @@ class MultiGridEnv(gym.Env):
         self.objects=objects_set
 
         if partial_obs:
-            self.observation_space = spaces.Box(
-                low=0,
-                high=10,
-                shape=(self.n_agents, agent_view_size, agent_view_size, self.objects.encode_dim),
-                dtype='uint8'
+            self.observation_space = spaces.Dict(
+            {
+                "image" : spaces.Box(
+                    low=0,
+                    high=10,
+                    shape=(self.n_agents, agent_view_size, agent_view_size, self.objects.encode_dim),
+                    dtype='uint8'
+                ),
+                "global": spaces.Box(
+                    low=0,
+                    high=10,
+                    shape=(width, height, self.objects.encode_dim),
+                    dtype='uint8'
+                )
+            }
             )
-
+            
         else:
             self.observation_space = spaces.Box(
                 low=0,
@@ -1166,8 +1176,9 @@ class MultiGridEnv(gym.Env):
         
         obs = np.array(obs)
         # obs = obs.squeeze()
-        
-        return obs
+        global_obs = self.grid.encode(self.objects)
+
+        return [obs, global_obs]
 
     def seed(self, seed=1337):
         # Seed the random number generator
@@ -1575,8 +1586,9 @@ class MultiGridEnv(gym.Env):
         # print(rewards)
 
         obs = np.array(obs)
-        
-        return obs, rewards, done, {}
+        global_obs = self.grid.encode(self.objects)
+
+        return [obs, global_obs], rewards, done, {}
 
     # def schedule(self):
         

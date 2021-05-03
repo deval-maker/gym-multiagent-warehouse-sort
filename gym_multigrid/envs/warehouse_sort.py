@@ -143,6 +143,17 @@ class WarehouseSortEnv(MultiGridEnv):
 
     def step(self, actions):
         obs, rewards, done, info = MultiGridEnv.step(self, actions)
+        obs = {
+            "image": obs[0],
+            "global": obs[1],
+        }
         return obs, rewards, done, info
 
+    def reset(self):
+        obs = MultiGridEnv.reset(self)
+        obs = {
+            "image": obs[0],
+            "global": obs[1],
+        }
+        return obs
 
