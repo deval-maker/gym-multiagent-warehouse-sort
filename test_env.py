@@ -5,7 +5,7 @@ import numpy as np
 
 def main():
 
-    env = gym.make('MultiGrid-WarehouseSort-n16-v4')
+    env = gym.make('MultiGrid-WarehouseSort-n6-v2')
 
     obs = env.reset()
 
@@ -28,7 +28,7 @@ def main():
         if debug:
             time.sleep(0.01)
             print(env)
-            print("Observations:", obs.shape)
+            # print("Observations:", obs)
 
             ac = input('cmd >')
             ac = [int(ac)]

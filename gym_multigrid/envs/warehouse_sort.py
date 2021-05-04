@@ -107,7 +107,7 @@ class WarehouseSortEnv(MultiGridEnv):
         # induct_cell = self.grid.get(*induct_pos)
         if induct_cell and induct_cell.type=="induct":
             # (1 - 0.9 * (self.agents[i].steps_before_pick_put / self.max_steps))
-            rewards[i]+=3
+            rewards[i]+=5
             self.agents[i].carrying = induct_cell.give_package()
             self.agents[i].carrying.cur_pos = np.array([-1, -1])
             # self._reward(i, rewards, induct_cell, self.agents[i].carrying, is_pickup=True)
@@ -126,14 +126,14 @@ class WarehouseSortEnv(MultiGridEnv):
         if chute_cell and chute_cell.type == 'chute' and chute_cell.target_type == self.agents[i].carrying.type:
 
             if self.agents[i].carrying.index == chute_cell.index:
-                rewards[i]+=3
+                rewards[i]+=5
                 # self._reward(i, rewards, chute_cell, self.agents[i].carrying)
                 chute_cell.drop_package(self.agents[i].carrying)
                 self.agents[i].carrying.cur_pos = chute_cell.cur_pos
                 self.agents[i].carrying = None
                 # self.agents[i].target_pos = None
             else:
-                rewards[i]+=-0.1
+                rewards[i]+=-0.15
             
             self.agents[i].steps_before_pick_put = 0
 

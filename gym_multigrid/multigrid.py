@@ -1475,7 +1475,7 @@ class MultiGridEnv(gym.Env):
                 continue
 
             self.agents[i].steps_before_pick_put += 1
-            rewards[i]+=-0.02
+            rewards[i]+=-0.17
 
             # Get the position in front of the agent
             fwd_pos = self.agents[i].front_pos
@@ -1494,12 +1494,12 @@ class MultiGridEnv(gym.Env):
             # Rotate left
             elif actions[i] == self.actions.left:
                 self.agents[i].dir = (self.agents[i].dir - 1 + 4) % 4
-                rewards[i]+=-0.05
+                rewards[i]+=-0.03
 
             # Rotate right
             elif actions[i] == self.actions.right:
                 self.agents[i].dir = (self.agents[i].dir + 1) % 4
-                rewards[i]+=-0.05
+                rewards[i]+=-0.03
 
             # Move forward
             elif actions[i] == self.actions.forward:
@@ -1548,7 +1548,7 @@ class MultiGridEnv(gym.Env):
                         if self.agents[i].carrying:
                             self._handle_drop(i, rewards, chute, fwd_cell)
                         else:
-                            rewards[i]+= -0.02
+                            rewards[i]+= -0.15
             
             for induct in self.inducts:
                 for target_pos in induct.target_pos:
@@ -1556,7 +1556,7 @@ class MultiGridEnv(gym.Env):
                         if  not self.agents[i].carrying:
                             self._handle_pickup(i, rewards, induct, fwd_cell)
                         else:
-                            rewards[i]+= -0.02
+                            rewards[i]+= -0.15
 
             # else:
                 # rewards[i]+= -np.linalg.norm(self.agents[i].target_pos-self.agents[i].pos)
