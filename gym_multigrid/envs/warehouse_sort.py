@@ -9,7 +9,7 @@ class WarehouseSortEnv(MultiGridEnv):
     def __init__(
         self,
         size=10,
-        view_size=7,
+        view_size=13,
         width=None,
         height=None,
         goal_pst = [],
@@ -41,15 +41,15 @@ class WarehouseSortEnv(MultiGridEnv):
             ch = Chute(self.world,self.goal_index[i], target_type='ball')
             self.chutes.append(ch)
 
-        for _ in range(self.num_balls):
-            ind = Induct(self.world, n_packages=len(self.goal_index))
+        for i in range(self.num_balls):
+            ind = Induct(self.world, induct_index=i+1, n_packages=len(self.goal_index))
             self.inducts.append(ind)
 
         super().__init__(
             grid_size=size,
             width=width,
             height=height,
-            max_steps= 700,
+            max_steps= 400,
             actions_set=WarehouseActions,
             partial_obs=True,
             # Set this to True for maximum speed
@@ -107,9 +107,12 @@ class WarehouseSortEnv(MultiGridEnv):
         # induct_cell = self.grid.get(*induct_pos)
         if induct_cell and induct_cell.type=="induct":
             # (1 - 0.9 * (self.agents[i].steps_before_pick_put / self.max_steps))
-            rewards[i]+=5
+            # rewards[i]+=random.randrange(2, 5)
             self.agents[i].carrying = induct_cell.give_package()
-            self.agents[i].carrying.cur_pos = np.array([-1, -1])
+            if self.agents[i].carrying:
+                rewards[i]+=(1 - 0.9 * (self.agents[i].steps_before_pick_put/self.max_steps))
+                # rewards[i]+=1
+            # self.agents[i].carrying.cur_pos = np.array([-1, -1])
             # self._reward(i, rewards, induct_cell, self.agents[i].carrying, is_pickup=True)
             # chute_index = self.agents[i].carrying.index
             # self.agents[i].target_pos = self.chutes[chute_index].target_pos
@@ -126,14 +129,15 @@ class WarehouseSortEnv(MultiGridEnv):
         if chute_cell and chute_cell.type == 'chute' and chute_cell.target_type == self.agents[i].carrying.type:
 
             if self.agents[i].carrying.index == chute_cell.index:
-                rewards[i]+=5
+                rewards[i]+=(1 - 0.9 * (self.agents[i].steps_before_pick_put/self.max_steps))
+                # rewards[i]+=1
                 # self._reward(i, rewards, chute_cell, self.agents[i].carrying)
                 chute_cell.drop_package(self.agents[i].carrying)
                 self.agents[i].carrying.cur_pos = chute_cell.cur_pos
                 self.agents[i].carrying = None
                 # self.agents[i].target_pos = None
             else:
-                rewards[i]+=-0.15
+                rewards[i]+=-0.25 #random.random()
             
             self.agents[i].steps_before_pick_put = 0
 

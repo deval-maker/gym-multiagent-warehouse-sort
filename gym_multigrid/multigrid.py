@@ -187,9 +187,9 @@ class WorldObj:
     def encode(self, world, current_agent=False):
         """Encode the a description of this object as a 3-tuple of integers"""
         if world.encode_dim==3:
-            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0)
+            return (world.OBJECT_TO_IDX[self.type], 0, 0)
         else:
-            return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, 0, 0, 0)
+            return (world.OBJECT_TO_IDX[self.type], 0, 0, 0, 0, 0, 0)
 
     @staticmethod
     def decode(type_idx, color_idx, state):
@@ -301,12 +301,14 @@ class Wall(WorldObj):
         fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
 
 class Induct(WorldObj):
-    def __init__(self, world, color='cyan', n_packages=1):
+    def __init__(self, world, color='cyan', induct_index=0, n_packages=1):
         super().__init__(world, 'induct', color)
         self.package = None
         self.world = world
         self.n_packages = n_packages
         self.color = color
+        self.reset()
+        self.induct_index = induct_index
         self.generate_package()
         
     def can_pickup(self):
@@ -320,13 +322,16 @@ class Induct(WorldObj):
     def give_package(self):
         if self.package:
             old_package = self.package
-            del self.package
+            self.package = None
             self.generate_package()
             return old_package
     
     def generate_package(self):
-        index = random.randrange(self.n_packages)+1
-        self.package = Ball(self.world, index)
+        if self.total_packages > 0:
+            index = random.randrange(self.n_packages)+1
+            # index = self.induct_index
+            self.package = Ball(self.world, index)
+            self.total_packages -= 1
     
     def encode(self, world, current_agent=False):
         """Encode the a description of this object as a 3-tuple of integers"""
@@ -338,7 +343,9 @@ class Induct(WorldObj):
                         world.OBJECT_TO_IDX[self.package.type], world.COLOR_TO_IDX[self.package.color], 0, 0, 0)
             else:
                 return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, 0, 0, 0)
-    
+    def reset(self):
+        self.total_packages = 100000
+
     def get_target_poses(self, grid):
         self.target_pos = []
         cur_pos = np.array(self.cur_pos)
@@ -560,17 +567,17 @@ class Agent(WorldObj):
             return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], self.dir)
         elif self.carrying:
             if current_agent:
-                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], world.OBJECT_TO_IDX[self.carrying.type],
+                return (world.OBJECT_TO_IDX[self.type], 0, world.OBJECT_TO_IDX[self.carrying.type],
                         world.COLOR_TO_IDX[self.carrying.color], self.dir, 1, self.past_action)
             else:
-                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], world.OBJECT_TO_IDX[self.carrying.type],
+                return (world.OBJECT_TO_IDX[self.type], 0, world.OBJECT_TO_IDX[self.carrying.type],
                         world.COLOR_TO_IDX[self.carrying.color], self.dir, 2, self.past_action)
 
         else:
             if current_agent:
-                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, self.dir, 1, self.past_action)
+                return (world.OBJECT_TO_IDX[self.type], 0, 0, 0, self.dir, 1, self.past_action)
             else:
-                return (world.OBJECT_TO_IDX[self.type], world.COLOR_TO_IDX[self.color], 0, 0, self.dir, 2, self.past_action)
+                return (world.OBJECT_TO_IDX[self.type], 0, 0, 0, self.dir, 2, self.past_action)
 
         # [ Agent's (self) type, Agent's (self) color, 
         #   Agent-carrying type, Agent-carrying color,
@@ -1159,6 +1166,9 @@ class MultiGridEnv(gym.Env):
         for a in self.agents:
             a.reset()
 
+        for i in self.inducts:
+            i.reset()
+
         # Step count since episode start
         self.step_count = 0
 
@@ -1459,6 +1469,7 @@ class MultiGridEnv(gym.Env):
         rewards = np.zeros(len(actions))
         done = False
         done_agents = [False for _ in range(len(self.agents))]
+        done_inducts = [False for _ in range(len(self.inducts))]
 
         for i in order:
             
@@ -1475,7 +1486,7 @@ class MultiGridEnv(gym.Env):
                 continue
 
             self.agents[i].steps_before_pick_put += 1
-            rewards[i]+=-0.17
+            rewards[i]+=-0.0
 
             # Get the position in front of the agent
             fwd_pos = self.agents[i].front_pos
@@ -1489,23 +1500,24 @@ class MultiGridEnv(gym.Env):
             #     actions[i] == self.actions.forward:
 
             if actions[i] == self.actions.still:
-                rewards[i]+=-0.07
+                rewards[i]+=-0.00
             
             # Rotate left
             elif actions[i] == self.actions.left:
                 self.agents[i].dir = (self.agents[i].dir - 1 + 4) % 4
-                rewards[i]+=-0.03
+                rewards[i]+=-0.00
 
             # Rotate right
             elif actions[i] == self.actions.right:
                 self.agents[i].dir = (self.agents[i].dir + 1) % 4
-                rewards[i]+=-0.03
+                rewards[i]+=-0.00
 
             # Move forward
             elif actions[i] == self.actions.forward:
                 if fwd_cell is not None:
                     if fwd_cell.type == 'agent':
-                        rewards[i]+= -0.05
+                        rewards[i]+= -0.00
+                        # done_agents[i] = True
                 elif fwd_cell is None or fwd_cell.can_overlap():
                     self.grid.set(*fwd_pos, self.agents[i])
                     self.grid.set(*self.agents[i].pos, None)
@@ -1548,20 +1560,25 @@ class MultiGridEnv(gym.Env):
                         if self.agents[i].carrying:
                             self._handle_drop(i, rewards, chute, fwd_cell)
                         else:
-                            rewards[i]+= -0.15
+                            rewards[i]+=-0.25 #random.random()
             
-            for induct in self.inducts:
+            for j, induct in enumerate(self.inducts):
                 for target_pos in induct.target_pos:
                     if tuple(target_pos) == tuple(self.agents[i].pos):
                         if  not self.agents[i].carrying:
                             self._handle_pickup(i, rewards, induct, fwd_cell)
                         else:
-                            rewards[i]+= -0.15
+                            rewards[i]+=-0.25 #random.random()
+                    if induct.total_packages == 0:
+                        done_inducts[j] = True
 
             # else:
                 # rewards[i]+= -np.linalg.norm(self.agents[i].target_pos-self.agents[i].pos)
 
         if any(done_agents):
+            done = True
+
+        if all(done_inducts):
             done = True
 
         if self.step_count >= self.max_steps:
@@ -1587,7 +1604,7 @@ class MultiGridEnv(gym.Env):
 
         obs = np.array(obs)
         global_obs = self.grid.encode(self.objects)
-
+        
         return [obs, global_obs], rewards, done, {}
 
     # def schedule(self):
