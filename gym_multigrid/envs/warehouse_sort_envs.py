@@ -70,6 +70,129 @@ register(
     entry_point=f'gym_multigrid.envs:WarehouseSortEnvN16V4'
 )
 
+class WarehouseSortEnvN1V4(WarehouseSortEnv):
+    def __init__(self):
+        w = 13
+        h = 13
+        n_agents = 1
+        super().__init__(size=None,
+        height=h,
+        width=w,
+        goal_pst = [[w-1,3], [w-1,9], [w-1,6]],
+        goal_index = [1,2,3],
+        agents_index = [i+1 for i in range(n_agents)],
+        num_balls=2,
+        balls_pst=[[0,3], [0,h-4]],
+        zero_sum=False)
+
+register(
+    id=f'MultiGrid-WarehouseSort-n1-v4',
+    entry_point=f'gym_multigrid.envs:WarehouseSortEnvN1V4'
+)
+
+class WarehouseSortEnvN1V5(WarehouseSortEnv):
+    def __init__(self):
+        w = 9
+        h = 9
+        n_agents = 1
+        super().__init__(size=None,
+        height=h,
+        width=w,
+        goal_pst = [[5,0], [5,h-1], [w-1,4]],
+        goal_index = [1,2,3],
+        agents_index = [i+1 for i in range(n_agents)],
+        num_balls=2,
+        balls_pst=[[0,3], [0,h-4]],
+        zero_sum=False)
+
+register(
+    id=f'MultiGrid-WarehouseSort-n1-v5',
+    entry_point=f'gym_multigrid.envs:WarehouseSortEnvN1V5'
+)
+
+
+class WarehouseSortEnvN2V5(WarehouseSortEnv):
+    def __init__(self):
+        w = 9
+        h = 9
+        n_agents = 2
+        super().__init__(size=None,
+        height=h,
+        width=w,
+        goal_pst = [[5,0], [5,h-1], [w-1,4]],
+        goal_index = [1,2,3],
+        agents_index = [i+1 for i in range(n_agents)],
+        num_balls=2,
+        balls_pst=[[0,3], [0,h-4]],
+        zero_sum=False)
+
+register(
+    id=f'MultiGrid-WarehouseSort-n2-v5',
+    entry_point=f'gym_multigrid.envs:WarehouseSortEnvN2V5'
+)
+
+class WarehouseSortEnvN4V5(WarehouseSortEnv):
+    def __init__(self):
+        w = 9
+        h = 9
+        n_agents = 4
+        super().__init__(size=None,
+        height=h,
+        width=w,
+        goal_pst = [[5,0], [5,h-1], [w-1,4]],
+        goal_index = [1,2,3],
+        agents_index = [i+1 for i in range(n_agents)],
+        num_balls=2,
+        balls_pst=[[0,3], [0,h-4]],
+        zero_sum=False)
+
+register(
+    id=f'MultiGrid-WarehouseSort-n4-v5',
+    entry_point=f'gym_multigrid.envs:WarehouseSortEnvN4V5'
+)
+
+class WarehouseSortEnvN8V5(WarehouseSortEnv):
+    def __init__(self):
+        w = 9
+        h = 9
+        n_agents = 8
+        super().__init__(size=None,
+        height=h,
+        width=w,
+        goal_pst = [[5,0], [5,h-1], [w-1,4]],
+        goal_index = [1,2,3],
+        agents_index = [i+1 for i in range(n_agents)],
+        num_balls=2,
+        balls_pst=[[0,3], [0,h-4]],
+        zero_sum=False)
+
+register(
+    id=f'MultiGrid-WarehouseSort-n8-v5',
+    entry_point=f'gym_multigrid.envs:WarehouseSortEnvN8V5'
+)
+
+class WarehouseSortEnvN12V5(WarehouseSortEnv):
+    def __init__(self):
+        w = 9
+        h = 9
+        n_agents = 12
+        super().__init__(size=None,
+        height=h,
+        width=w,
+        goal_pst = [[5,0], [5,h-1], [w-1,4]],
+        goal_index = [1,2,3],
+        agents_index = [i+1 for i in range(n_agents)],
+        num_balls=2,
+        balls_pst=[[0,3], [0,h-4]],
+        zero_sum=False)
+
+register(
+    id=f'MultiGrid-WarehouseSort-n12-v5',
+    entry_point=f'gym_multigrid.envs:WarehouseSortEnvN12V5'
+)
+
+
+
 class WarehouseSortEnvN2V4(WarehouseSortEnv):
     def __init__(self):
         w = 13
