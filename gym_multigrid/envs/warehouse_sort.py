@@ -17,6 +17,7 @@ class WarehouseSortEnv(MultiGridEnv):
         induct_pos=[],
         zero_sum = False,
         is_random = False,
+        seed=320,
     ):
 
         agents_index = [i+1 for i in range(n_agents)]
@@ -57,8 +58,9 @@ class WarehouseSortEnv(MultiGridEnv):
             agents=agents,
             agent_view_size=view_size,
             objects_set=self.world,
+            seed=seed,
         )
-
+    
     def _gen_grid(self, width, height):
         self.grid = Grid(width, height)
 
@@ -70,14 +72,14 @@ class WarehouseSortEnv(MultiGridEnv):
 
         for i, ch in enumerate(self.chutes):
             if self.is_random:
-                self.place_obj(ch)
+                self.place_obj(ch, reject_fn=random_env_reject_fn, allow_wall=True)
             else:
                 self.put_obj(ch, *self.chute_pos[i])
             ch.get_target_poses(self.grid)
 
         for i, ind in enumerate(self.inducts):
             if self.is_random:
-                self.place_obj(ind)
+                self.place_obj(ind, reject_fn=random_env_reject_fn, allow_wall=True)
             else:
                 self.put_obj(ind, *self.induct_pos[i])
             ind.get_target_poses(self.grid)
@@ -167,3 +169,39 @@ class WarehouseSortEnv(MultiGridEnv):
         }
         return obs
 
+
+def random_env_reject_fn(self, pos):
+    # Map of agent direction indices to vectors
+    blocked_zone_dir = [
+        np.array((1, 0)),
+        np.array((0, 1)),
+        np.array((-1, 0)),
+        np.array((0, -1)),
+
+        np.array((1, 1)),
+        np.array((1, -1)),
+        np.array((-1, 1)),
+        np.array((-1, -1)),
+    ]
+
+    # reject positions around the inducts and chutes
+    for dir in blocked_zone_dir:
+        try:
+            if self.grid.get(*(pos+dir)):
+                if self.grid.get(*(pos+dir)).type == 'induct' or self.grid.get(*(pos+dir)).type == 'chute':
+                    return True
+        except:
+            pass
+    
+    blocked = [
+        np.array((0, 0)),
+        np.array((self.width-1, 0)),
+        np.array((0, self.height-1)),
+        np.array((self.width-1, self.height-1)),
+    ]
+
+    for blk in blocked: 
+        if np.all(blk == pos):
+            return True
+
+    return False

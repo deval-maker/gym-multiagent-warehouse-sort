@@ -1356,8 +1356,9 @@ class MultiGridEnv(gym.Env):
                   top=None,
                   size=None,
                   reject_fn=None,
-                  max_tries=math.inf
-                  ):
+                  max_tries=math.inf,
+                  allow_wall=False,
+                ):
         """
         Place an object at an empty position in the grid
 
@@ -1389,9 +1390,10 @@ class MultiGridEnv(gym.Env):
                 self._rand_int(top[1], min(top[1] + size[1], self.grid.height))
             ))
 
-            # Don't place the object on top of another object
+            # Don't place the object on top of another object, wall is fine
             if self.grid.get(*pos) != None:
-                continue
+                if not (allow_wall and self.grid.get(*pos).type == "wall"):
+                    continue
 
             # Check if there is a filtering criterion
             if reject_fn and reject_fn(self, pos):
