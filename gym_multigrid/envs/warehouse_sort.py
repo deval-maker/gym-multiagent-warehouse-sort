@@ -12,20 +12,18 @@ class WarehouseSortEnv(MultiGridEnv):
         view_size=13,
         width=None,
         height=None,
-        goal_pst = [],
-        goal_index = [],
-        num_balls=[],
-        agents_index = [],
-        balls_index=[],
-        balls_pst=[],
-        zero_sum = False,
-
+        n_agents=1,
+        chute_pos = [],
+        induct_pos=[],
+        zero_sum = False
     ):
-        self.num_balls = num_balls
-        self.goal_pst = goal_pst
+
+        agents_index = [i+1 for i in range(n_agents)]
+        goal_index = [i+1 for i in range(len(chute_pos))]
+
+        self.chute_pos = chute_pos
         self.goal_index = goal_index
-        self.balls_index = balls_index
-        self.balls_pst = balls_pst
+        self.induct_pos = induct_pos
         self.zero_sum = zero_sum
 
         self.world = WarehouseWorld
@@ -37,11 +35,11 @@ class WarehouseSortEnv(MultiGridEnv):
         for i in agents_index:
             agents.append(Agent(self.world, view_size=view_size))
 
-        for i in range(len(self.goal_pst)):
+        for i in range(len(self.chute_pos)):
             ch = Chute(self.world,self.goal_index[i], target_type='ball')
             self.chutes.append(ch)
 
-        for i in range(self.num_balls):
+        for i in range(len(induct_pos)):
             ind = Induct(self.world, induct_index=i+1, n_packages=len(self.goal_index))
             self.inducts.append(ind)
 
@@ -69,11 +67,11 @@ class WarehouseSortEnv(MultiGridEnv):
         self.grid.vert_wall(self.world, width-1, 0)
 
         for i, ch in enumerate(self.chutes):
-            self.put_obj(ch, *self.goal_pst[i])
+            self.put_obj(ch, *self.chute_pos[i])
             ch.get_target_poses(self.grid)
 
         for i, ind in enumerate(self.inducts):
-            self.put_obj(ind, *self.balls_pst[i])
+            self.put_obj(ind, *self.induct_pos[i])
             ind.get_target_poses(self.grid)
 
         # Randomize the player start position and orientation
