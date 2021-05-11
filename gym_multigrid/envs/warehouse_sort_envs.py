@@ -147,3 +147,24 @@ register(
 )
     '''
     exec(v6)
+
+
+# Random Environment
+class WarehouseSortRandomV0(WarehouseSortEnv):
+    def __init__(self):
+        w = 9
+        h = 9
+        super().__init__(size=None,
+        height=h,
+        width=w,
+        n_agents=random.randrange(1, 10),
+        induct_pos=[[0,0], [0,0]],
+        chute_pos=[[0,0], [0,0], [0,0], [0,0]],
+        is_random=True,
+    )
+
+register(
+    id=f'MultiGrid-WarehouseSort-Random-v0',
+    entry_point=f'gym_multigrid.envs:WarehouseSortRandomV0'
+)
+

@@ -15,14 +15,16 @@ class WarehouseSortEnv(MultiGridEnv):
         n_agents=1,
         chute_pos = [],
         induct_pos=[],
-        zero_sum = False
+        zero_sum = False,
+        is_random = False,
     ):
 
         agents_index = [i+1 for i in range(n_agents)]
-        goal_index = [i+1 for i in range(len(chute_pos))]
+        chute_index = [i+1 for i in range(len(chute_pos))]
 
+        self.is_random = is_random
         self.chute_pos = chute_pos
-        self.goal_index = goal_index
+        self.chute_index = chute_index
         self.induct_pos = induct_pos
         self.zero_sum = zero_sum
 
@@ -36,11 +38,11 @@ class WarehouseSortEnv(MultiGridEnv):
             agents.append(Agent(self.world, view_size=view_size))
 
         for i in range(len(self.chute_pos)):
-            ch = Chute(self.world,self.goal_index[i], target_type='ball')
+            ch = Chute(self.world,self.chute_index[i], target_type='ball')
             self.chutes.append(ch)
 
         for i in range(len(induct_pos)):
-            ind = Induct(self.world, induct_index=i+1, n_packages=len(self.goal_index))
+            ind = Induct(self.world, induct_index=i+1, n_packages=len(self.chute_index))
             self.inducts.append(ind)
 
         super().__init__(
@@ -67,11 +69,17 @@ class WarehouseSortEnv(MultiGridEnv):
         self.grid.vert_wall(self.world, width-1, 0)
 
         for i, ch in enumerate(self.chutes):
-            self.put_obj(ch, *self.chute_pos[i])
+            if self.is_random:
+                self.place_obj(ch)
+            else:
+                self.put_obj(ch, *self.chute_pos[i])
             ch.get_target_poses(self.grid)
 
         for i, ind in enumerate(self.inducts):
-            self.put_obj(ind, *self.induct_pos[i])
+            if self.is_random:
+                self.place_obj(ind)
+            else:
+                self.put_obj(ind, *self.induct_pos[i])
             ind.get_target_poses(self.grid)
 
         # Randomize the player start position and orientation
