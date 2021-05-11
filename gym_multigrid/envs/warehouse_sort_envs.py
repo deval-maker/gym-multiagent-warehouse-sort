@@ -157,7 +157,7 @@ class WarehouseSortRandomV0(WarehouseSortEnv):
         super().__init__(size=None,
         height=h,
         width=w,
-        n_agents=random.randrange(1, 10),
+        n_agents=1,
         induct_pos=[[0,0], [0,0]],
         chute_pos=[[0,0], [0,0], [0,0], [0,0]],
         is_random=True,
