@@ -5,7 +5,7 @@ import numpy as np
 
 def main():
 
-    env = gym.make('MultiGrid-WarehouseSort-n12-v5')
+    env = gym.make('MultiGrid-WarehouseSort-n1-v6')
 
     obs = env.reset()
 
