@@ -5,7 +5,7 @@ import numpy as np
 
 def main():
 
-    env = gym.make('MultiGrid-WarehouseSort-Random-v0')
+    env = gym.make('MultiGrid-WarehouseSort-n1-v6')
 
     obs = env.reset()
 
@@ -22,12 +22,13 @@ def main():
 
     while True:
 
-        env.render(mode=mode, highlight=False)
+        env.render(mode=mode, highlight=True)
         ac = [env.action_space.sample() for _ in range(n_agents)]
 
         if debug:
             time.sleep(0.01)
             print(env)
+            import ipdb; ipdb.set_trace()
             # print("Observations:", obs)
 
             ac = input('cmd >')

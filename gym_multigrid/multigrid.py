@@ -647,7 +647,7 @@ class Agent(WorldObj):
         Get the extents of the square set of tiles visible to the agent
         Note: the bottom extent indices are not included in the set
         """
-
+        
         # Facing right
         if self.dir == 0:
             topX = self.pos[0]
@@ -664,6 +664,35 @@ class Agent(WorldObj):
         elif self.dir == 3:
             topX = self.pos[0] - self.view_size // 2
             topY = self.pos[1] - self.view_size + 1
+        else:
+            assert False, "invalid agent direction"
+
+        botX = topX + self.view_size
+        botY = topY + self.view_size
+
+        return (topX, topY, botX, botY)
+
+    def get_center_view_exts(self):
+        """
+        Get the extents of the square set of tiles visible to the agent
+        Note: the bottom extent indices are not included in the set
+        """
+        # Facing right
+        if self.dir == 0:
+            topX = self.pos[0] - self.view_size // 2
+            topY = self.pos[1] - self.view_size // 2
+        # Facing down
+        elif self.dir == 1:
+            topX = self.pos[0] - self.view_size // 2
+            topY = self.pos[1] - self.view_size // 2
+        # Facing left
+        elif self.dir == 2:
+            topX = self.pos[0] - self.view_size // 2
+            topY = self.pos[1] - self.view_size // 2
+        # Facing up
+        elif self.dir == 3:
+            topX = self.pos[0] - self.view_size // 2
+            topY = self.pos[1] - self.view_size // 2
         else:
             assert False, "invalid agent direction"
 
@@ -1505,12 +1534,12 @@ class MultiGridEnv(gym.Env):
             # Rotate left
             elif actions[i] == self.actions.left:
                 self.agents[i].dir = (self.agents[i].dir - 1 + 4) % 4
-                rewards[i]+=-0.00
+                rewards[i]+=-0.05
 
             # Rotate right
             elif actions[i] == self.actions.right:
                 self.agents[i].dir = (self.agents[i].dir + 1) % 4
-                rewards[i]+=-0.00
+                rewards[i]+=-0.05
 
             # Move forward
             elif actions[i] == self.actions.forward:
@@ -1629,7 +1658,8 @@ class MultiGridEnv(gym.Env):
 
         for a in self.agents:
 
-            topX, topY, botX, botY = a.get_view_exts()
+            # import ipdb; ipdb.set_trace()
+            topX, topY, botX, botY = a.get_center_view_exts()
 
             grid = self.grid.slice(self.objects, topX, topY, a.view_size, a.view_size)
 
@@ -1703,7 +1733,7 @@ class MultiGridEnv(gym.Env):
                 # of the agent's view area
                 f_vec = a.dir_vec
                 r_vec = a.right_vec
-                top_left = a.pos + f_vec * (a.view_size - 1) - r_vec * (a.view_size // 2)
+                top_left = a.pos + f_vec * (a.view_size//2) - r_vec * (a.view_size // 2)
 
                 # Mask of which cells to highlight
 
