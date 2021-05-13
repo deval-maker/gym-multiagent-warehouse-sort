@@ -841,8 +841,9 @@ class Grid:
         """
         Render a tile and cache the result
         """
-
+        # import ipdb; ipdb.set_trace()
         key = (*highlights, tile_size)
+
         key = obj.encode(world) + key if obj else key
 
         if key in cls.tile_cache:
@@ -893,7 +894,9 @@ class Grid:
             for i in range(0, self.width):
                 cell = self.get(i, j)
 
+                # import ipdb; ipdb.set_trace()
                 # agent_here = np.array_equal(agent_pos, (i, j))
+
                 tile_img = Grid.render_tile(
                     world,
                     cell,
@@ -1490,7 +1493,7 @@ class MultiGridEnv(gym.Env):
         
         # Handle Single Agent case
         if actions.ndim == 0:
-            actions = [ np.array(actions.tolist()) ]
+            actions = [ (actions.tolist()) ]
 
         self.step_count += 1
 
@@ -1501,7 +1504,6 @@ class MultiGridEnv(gym.Env):
         done_inducts = [False for _ in range(len(self.inducts))]
 
         for i in order:
-            
             self.agents[i].past_action = actions[i]
 
             # if self.agents[i].carrying:
@@ -1534,12 +1536,12 @@ class MultiGridEnv(gym.Env):
             # Rotate left
             elif actions[i] == self.actions.left:
                 self.agents[i].dir = (self.agents[i].dir - 1 + 4) % 4
-                rewards[i]+=-0.05
+                rewards[i]+=-0.00
 
             # Rotate right
             elif actions[i] == self.actions.right:
                 self.agents[i].dir = (self.agents[i].dir + 1) % 4
-                rewards[i]+=-0.05
+                rewards[i]+=-0.00
 
             # Move forward
             elif actions[i] == self.actions.forward:
@@ -1589,7 +1591,7 @@ class MultiGridEnv(gym.Env):
                         if self.agents[i].carrying:
                             self._handle_drop(i, rewards, chute, fwd_cell)
                         else:
-                            rewards[i]+=-0.1 #random.random()
+                            rewards[i]+=-0.0 #random.random()
             
             for j, induct in enumerate(self.inducts):
                 for target_pos in induct.target_pos:
@@ -1597,7 +1599,7 @@ class MultiGridEnv(gym.Env):
                         if  not self.agents[i].carrying:
                             self._handle_pickup(i, rewards, induct, fwd_cell)
                         else:
-                            rewards[i]+=-0.1 #random.random()
+                            rewards[i]+=-0.0 #random.random()
                     if induct.total_packages == 0:
                         done_inducts[j] = True
 
