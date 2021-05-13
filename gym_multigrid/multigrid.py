@@ -647,7 +647,7 @@ class Agent(WorldObj):
         Get the extents of the square set of tiles visible to the agent
         Note: the bottom extent indices are not included in the set
         """
-
+        
         # Facing right
         if self.dir == 0:
             topX = self.pos[0]
@@ -664,6 +664,35 @@ class Agent(WorldObj):
         elif self.dir == 3:
             topX = self.pos[0] - self.view_size // 2
             topY = self.pos[1] - self.view_size + 1
+        else:
+            assert False, "invalid agent direction"
+
+        botX = topX + self.view_size
+        botY = topY + self.view_size
+
+        return (topX, topY, botX, botY)
+
+    def get_center_view_exts(self):
+        """
+        Get the extents of the square set of tiles visible to the agent
+        Note: the bottom extent indices are not included in the set
+        """
+        # Facing right
+        if self.dir == 0:
+            topX = self.pos[0] - self.view_size // 2
+            topY = self.pos[1] - self.view_size // 2
+        # Facing down
+        elif self.dir == 1:
+            topX = self.pos[0] - self.view_size // 2
+            topY = self.pos[1] - self.view_size // 2
+        # Facing left
+        elif self.dir == 2:
+            topX = self.pos[0] - self.view_size // 2
+            topY = self.pos[1] - self.view_size // 2
+        # Facing up
+        elif self.dir == 3:
+            topX = self.pos[0] - self.view_size // 2
+            topY = self.pos[1] - self.view_size // 2
         else:
             assert False, "invalid agent direction"
 
@@ -812,8 +841,9 @@ class Grid:
         """
         Render a tile and cache the result
         """
-
+        # import ipdb; ipdb.set_trace()
         key = (*highlights, tile_size)
+
         key = obj.encode(world) + key if obj else key
 
         if key in cls.tile_cache:
@@ -864,7 +894,9 @@ class Grid:
             for i in range(0, self.width):
                 cell = self.get(i, j)
 
+                # import ipdb; ipdb.set_trace()
                 # agent_here = np.array_equal(agent_pos, (i, j))
+
                 tile_img = Grid.render_tile(
                     world,
                     cell,
@@ -1463,7 +1495,7 @@ class MultiGridEnv(gym.Env):
         
         # Handle Single Agent case
         if actions.ndim == 0:
-            actions = [ np.array(actions.tolist()) ]
+            actions = [ (actions.tolist()) ]
 
         self.step_count += 1
 
@@ -1474,7 +1506,6 @@ class MultiGridEnv(gym.Env):
         done_inducts = [False for _ in range(len(self.inducts))]
 
         for i in order:
-            
             self.agents[i].past_action = actions[i]
 
             # if self.agents[i].carrying:
@@ -1562,7 +1593,7 @@ class MultiGridEnv(gym.Env):
                         if self.agents[i].carrying:
                             self._handle_drop(i, rewards, chute, fwd_cell)
                         else:
-                            rewards[i]+=-0.1 #random.random()
+                            rewards[i]+=-0.0 #random.random()
             
             for j, induct in enumerate(self.inducts):
                 for target_pos in induct.target_pos:
@@ -1570,7 +1601,7 @@ class MultiGridEnv(gym.Env):
                         if  not self.agents[i].carrying:
                             self._handle_pickup(i, rewards, induct, fwd_cell)
                         else:
-                            rewards[i]+=-0.1 #random.random()
+                            rewards[i]+=-0.0 #random.random()
                     if induct.total_packages == 0:
                         done_inducts[j] = True
 
@@ -1631,7 +1662,8 @@ class MultiGridEnv(gym.Env):
 
         for a in self.agents:
 
-            topX, topY, botX, botY = a.get_view_exts()
+            # import ipdb; ipdb.set_trace()
+            topX, topY, botX, botY = a.get_center_view_exts()
 
             grid = self.grid.slice(self.objects, topX, topY, a.view_size, a.view_size)
 
@@ -1705,7 +1737,7 @@ class MultiGridEnv(gym.Env):
                 # of the agent's view area
                 f_vec = a.dir_vec
                 r_vec = a.right_vec
-                top_left = a.pos + f_vec * (a.view_size - 1) - r_vec * (a.view_size // 2)
+                top_left = a.pos + f_vec * (a.view_size//2) - r_vec * (a.view_size // 2)
 
                 # Mask of which cells to highlight
 
