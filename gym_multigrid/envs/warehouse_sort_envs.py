@@ -161,6 +161,7 @@ class WarehouseSortRandomV0(WarehouseSortEnv):
         induct_pos=[[0,0], [0,0]],
         chute_pos=[[0,0], [0,0], [0,0], [0,0]],
         is_random=True,
+        seed=123,
     )
 
 register(
