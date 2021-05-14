@@ -9,7 +9,7 @@ class WarehouseSortEnv(MultiGridEnv):
     def __init__(
         self,
         size=10,
-        view_size=13,
+        view_size=15,
         width=None,
         height=None,
         n_agents=1,
@@ -143,7 +143,7 @@ class WarehouseSortEnv(MultiGridEnv):
                 self.agents[i].carrying = None
                 # self.agents[i].target_pos = None
             else:
-                rewards[i]+=-0.0 #random.random()
+                rewards[i]+=-0.1 #random.random()
             
             self.agents[i].steps_before_pick_put = 0
 
